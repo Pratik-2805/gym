@@ -1,0 +1,340 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import {
+  Users,
+  Search,
+  UserPlus,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
+  FileText,
+  ShieldAlert,
+} from 'lucide-react';
+
+interface MemberData {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  address: string | null;
+  dob: string | null;
+  emergencyContact: string | null;
+  notes: string | null;
+  isBotDisabled: boolean;
+  memberships: Array<{
+    id: string;
+    status: 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+    endDate: string;
+    plan: {
+      name: string;
+    };
+  }>;
+}
+
+export default function MembersPage() {
+  const { gymSlug } = useParams() as { gymSlug: string };
+  const [members, setMembers] = useState<MemberData[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Form Fields
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
+  const [dob, setDob] = useState('');
+  const [emergencyContact, setEmergencyContact] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const fetchMembers = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/dashboard/${gymSlug}/members`);
+      if (res.ok) {
+        const data = await res.json();
+        setMembers(data.members || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMembers();
+  }, [gymSlug]);
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      const res = await fetch(`/api/dashboard/${gymSlug}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          phone,
+          email,
+          address,
+          dob: dob || undefined,
+          emergencyContact,
+          notes,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setIsAdding(false);
+        // Clear fields
+        setName('');
+        setPhone('');
+        setEmail('');
+        setAddress('');
+        setDob('');
+        setEmergencyContact('');
+        setNotes('');
+        
+        await fetchMembers();
+      } else {
+        setError(data.error || 'Failed to add member.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('An unexpected error occurred.');
+    }
+  };
+
+  // Filter members
+  const filteredMembers = members.filter(
+    (m) =>
+      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.phone.includes(searchQuery) ||
+      (m.email && m.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header section */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Members Directory</h2>
+          <p className="text-xs text-zinc-500 mt-1">Manage member profiles, contact logs, and subscriptions.</p>
+        </div>
+        <button
+          onClick={() => setIsAdding(true)}
+          className="flex items-center justify-center gap-1.5 rounded-xl bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-cyan-500"
+        >
+          <UserPlus className="h-4 w-4" /> Add New Member
+        </button>
+      </div>
+
+      {/* Main Layout Grid */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Members List Table */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 backdrop-blur-md xl:col-span-2 space-y-4">
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-500">
+              <Search className="h-4 w-4" />
+            </span>
+            <input
+              type="text"
+              placeholder="Search by name, phone or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 py-2.5 pl-10 pr-4 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+
+          <div className="overflow-x-auto">
+            {isLoading ? (
+              <div className="flex h-48 items-center justify-center text-xs text-zinc-500">Loading member records...</div>
+            ) : filteredMembers.length === 0 ? (
+              <div className="flex h-48 items-center justify-center text-xs text-zinc-500">No member records match search criteria</div>
+            ) : (
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-zinc-900 text-zinc-400 font-bold uppercase tracking-wider">
+                    <th className="py-3 px-4">Name</th>
+                    <th className="py-3 px-4">Phone / WhatsApp</th>
+                    <th className="py-3 px-4">Plan Status</th>
+                    <th className="py-3 px-4">Expiry</th>
+                    <th className="py-3 px-4">Bot Rule</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-900/60">
+                  {filteredMembers.map((m) => {
+                    const activeSub = m.memberships.find((s) => s.status === 'ACTIVE');
+                    return (
+                      <tr key={m.id} className="hover:bg-zinc-900/30 transition-all">
+                        <td className="py-3.5 px-4 font-bold text-white">{m.name}</td>
+                        <td className="py-3.5 px-4 text-zinc-300 font-mono">{m.phone}</td>
+                        <td className="py-3.5 px-4">
+                          {activeSub ? (
+                            <span className="rounded bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-400 border border-emerald-500/20">
+                              {activeSub.plan.name}
+                            </span>
+                          ) : (
+                            <span className="rounded bg-zinc-800 px-2 py-0.5 font-semibold text-zinc-400 border border-zinc-700">
+                              No active plan
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-zinc-400 font-semibold">
+                          {activeSub ? new Date(activeSub.endDate).toLocaleDateString('en-IN') : '--'}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {m.isBotDisabled ? (
+                            <span className="rounded bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-bold text-rose-400 border border-rose-500/20">
+                              Takeover Active
+                            </span>
+                          ) : (
+                            <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-bold text-cyan-400 border border-cyan-500/20">
+                              Bot Normal
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* Add Member Slideover / Card */}
+        {isAdding ? (
+          <div className="rounded-2xl border border-cyan-800 bg-zinc-950/70 p-6 shadow-2xl shadow-cyan-950/10 xl:col-span-1 h-fit">
+            <h3 className="text-lg font-bold text-white mb-4">Add Member Profile</h3>
+            
+            {error && (
+              <div className="mb-4 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs font-semibold text-rose-400">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleAddMember} className="space-y-4 text-xs">
+              <div>
+                <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">WhatsApp Phone Number</label>
+                <input
+                  type="text"
+                  placeholder="e.g. +919876543210"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Email (Optional)</label>
+                <input
+                  type="email"
+                  placeholder="john@doe.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={dob}
+                    onChange={(e) => setDob(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Emergency Contact</label>
+                  <input
+                    type="text"
+                    placeholder="Relation & Phone"
+                    value={emergencyContact}
+                    onChange={(e) => setEmergencyContact(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Address (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="Street and Area details"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Medical Notes / Goals</label>
+                <textarea
+                  placeholder="e.g. Weight loss goals, back pain history..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-cyan-600 py-3 font-bold text-white hover:bg-cyan-500"
+                >
+                  Save Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAdding(false)}
+                  className="flex-1 rounded-xl border border-zinc-800 py-3 font-bold text-zinc-400 hover:bg-zinc-850"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-zinc-800 p-8 flex flex-col items-center justify-center text-center text-zinc-500 xl:col-span-1 h-80">
+            <Users className="h-10 w-10 text-zinc-700 mb-2" />
+            <h4 className="text-sm font-bold text-white">Add New Profile</h4>
+            <p className="text-xs text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
+              Open the form to register new custom members in the system manually.
+            </p>
+            <button
+              onClick={() => setIsAdding(true)}
+              className="mt-4 rounded-xl border border-zinc-850 px-4 py-2 text-xs font-semibold text-cyan-400 hover:bg-zinc-900 hover:text-white transition-all"
+            >
+              Configure Member
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
