@@ -87,20 +87,20 @@ router.post('/register', async (req: any, res: Response): Promise<any> => {
       return { gym, user };
     });
 
-    // Auto log in the user on registration
+    // Auto log in the user on registration with a long-term 30-day session
     const payload = {
       userId: result.user.id,
       email: result.user.email,
       role: result.user.role as any,
       gymId: result.user.gymId,
     };
-    const token = signJWT(payload);
+    const token = signJWT(payload, '30d');
 
     res.cookie('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days in ms
+      maxAge: 60 * 60 * 24 * 30 * 1000, // 30 days in ms
       path: '/',
     });
 
@@ -123,7 +123,7 @@ router.post('/register', async (req: any, res: Response): Promise<any> => {
 // POST /api/auth/login
 router.post('/login', async (req: any, res: Response): Promise<any> => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -150,13 +150,18 @@ router.post('/login', async (req: any, res: Response): Promise<any> => {
       gymId: user.gymId,
     };
 
-    const token = signJWT(payload);
+    const duration = rememberMe ? '30d' : '7d';
+    const maxAge = rememberMe 
+      ? 60 * 60 * 24 * 30 * 1000  // 30 days
+      : 60 * 60 * 24 * 7 * 1000;  // 7 days
+
+    const token = signJWT(payload, duration);
 
     res.cookie('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days in ms
+      maxAge,
       path: '/',
     });
 

@@ -58,6 +58,11 @@ router.post('/', async (req: RequestWithUser, res: Response): Promise<any> => {
       return res.status(400).json({ error: 'Name and phone are required' });
     }
 
+    const phoneRegex = /^\+?[0-9]+$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ error: 'WhatsApp Phone Number must contain only numbers (optionally starting with +)' });
+    }
+
     // Check if phone already registered in this gym
     const existing = await db.member.findUnique({
       where: {
@@ -161,6 +166,130 @@ router.post('/:memberId/toggle-bot', async (req: RequestWithUser, res: Response)
     return res.json({ success: true, member });
   } catch (error) {
     console.error('Error toggling bot status:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/dashboard/:gymSlug/members/:memberId
+router.put('/:memberId', async (req: RequestWithUser, res: Response): Promise<any> => {
+  try {
+    const { gymSlug, memberId } = req.params;
+    const session = req.user!;
+
+    const gym = await db.gym.findUnique({
+      where: { slug: gymSlug },
+    });
+
+    if (!gym) {
+      return res.status(404).json({ error: 'Gym not found' });
+    }
+
+    const { name, phone, email, address, dob, emergencyContact, notes } = req.body;
+
+    if (!name || !phone) {
+      return res.status(400).json({ error: 'Name and phone are required' });
+    }
+
+    const phoneRegex = /^\+?[0-9]+$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ error: 'WhatsApp Phone Number must contain only numbers (optionally starting with +)' });
+    }
+
+    // Verify member belongs to this gym
+    const memberToUpdate = await db.member.findUnique({
+      where: { id: memberId },
+    });
+
+    if (!memberToUpdate || memberToUpdate.gymId !== gym.id) {
+      return res.status(404).json({ error: 'Member not found in this gym' });
+    }
+
+    // Check if phone registered to another member in this gym
+    const existing = await db.member.findFirst({
+      where: {
+        gymId: gym.id,
+        phone,
+        NOT: { id: memberId },
+      },
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'Member phone already exists for this gym' });
+    }
+
+    const member = await db.member.update({
+      where: {
+        id: memberId,
+      },
+      data: {
+        name,
+        phone,
+        email: email || null,
+        address: address || null,
+        dob: dob ? new Date(dob) : null,
+        emergencyContact: emergencyContact || null,
+        notes: notes || null,
+      },
+    });
+
+    await db.auditLog.create({
+      data: {
+        action: 'MEMBER_UPDATE',
+        details: `Updated member ${name} (${phone})`,
+        gymId: gym.id,
+        userId: session.userId,
+      },
+    });
+
+    return res.json({ success: true, member });
+  } catch (error) {
+    console.error('Error updating member:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/dashboard/:gymSlug/members/:memberId
+router.delete('/:memberId', async (req: RequestWithUser, res: Response): Promise<any> => {
+  try {
+    const { gymSlug, memberId } = req.params;
+    const session = req.user!;
+
+    const gym = await db.gym.findUnique({
+      where: { slug: gymSlug },
+    });
+
+    if (!gym) {
+      return res.status(404).json({ error: 'Gym not found' });
+    }
+
+    const member = await db.member.findUnique({
+      where: {
+        id: memberId,
+      },
+    });
+
+    if (!member || member.gymId !== gym.id) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+
+    await db.member.delete({
+      where: {
+        id: memberId,
+      },
+    });
+
+    await db.auditLog.create({
+      data: {
+        action: 'MEMBER_DELETE',
+        details: `Deleted member ${member.name} (${member.phone})`,
+        gymId: gym.id,
+        userId: session.userId,
+      },
+    });
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting member:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
