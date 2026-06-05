@@ -3,7 +3,7 @@ import { fetchBackend } from './api-client';
 export interface JWTPayload {
   userId: string;
   email: string;
-  role: 'SUPERADMIN' | 'OWNER' | 'STAFF';
+  role: 'SUPERADMIN' | 'GYM_OWNER' | 'STAFF';
   gymId: string | null;
 }
 

@@ -1,13 +1,12 @@
-import { Router, Response } from 'express';
-import crypto from 'crypto';
-import { db } from '../lib/db';
-import { hashPassword, verifyPassword, signJWT } from '../lib/auth';
-import { authenticateToken, RequestWithUser } from '../middleware/auth';
+import { Router } from 'express';
+import prisma from '../prisma.js';
+import { hashPassword, verifyPassword, signJWT } from '../utils/auth.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
 
 // POST /api/auth/register
-router.post('/register', async (req: any, res: Response): Promise<any> => {
+router.post('/register', async (req, res) => {
   try {
     const { gymName, gymSlug, ownerName, ownerEmail, ownerPassword } = req.body;
 
@@ -16,7 +15,7 @@ router.post('/register', async (req: any, res: Response): Promise<any> => {
     }
 
     // Check slug uniqueness
-    const existingGym = await db.gym.findUnique({
+    const existingGym = await prisma.gym.findUnique({
       where: { slug: gymSlug.toLowerCase() },
     });
 
@@ -25,7 +24,7 @@ router.post('/register', async (req: any, res: Response): Promise<any> => {
     }
 
     // Check user uniqueness
-    const existingUser = await db.gymUser.findUnique({
+    const existingUser = await prisma.gymUser.findUnique({
       where: { email: ownerEmail },
     });
 
@@ -36,7 +35,7 @@ router.post('/register', async (req: any, res: Response): Promise<any> => {
     const passwordHash = hashPassword(ownerPassword);
 
     // Create Gym, Owner User, ChatbotSettings, PaymentSettings, and default plans in a transaction
-    const result = await db.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx) => {
       const gym = await tx.gym.create({
         data: {
           name: gymName,
@@ -49,7 +48,7 @@ router.post('/register', async (req: any, res: Response): Promise<any> => {
           name: ownerName,
           email: ownerEmail,
           passwordHash,
-          role: 'OWNER',
+          role: 'GYM_OWNER',
           gymId: gym.id,
         },
       });
@@ -79,7 +78,7 @@ router.post('/register', async (req: any, res: Response): Promise<any> => {
       await tx.auditLog.create({
         data: {
           action: 'GYM_REGISTER',
-          details: `Gym ${gymName} registered by ${ownerName} (${ownerEmail})`,
+          details: `Gym ${gymName} registered by owner ${ownerName} (${ownerEmail})`,
           gymId: gym.id,
           userId: user.id,
         },
@@ -92,19 +91,14 @@ router.post('/register', async (req: any, res: Response): Promise<any> => {
     const payload = {
       userId: result.user.id,
       email: result.user.email,
-      role: result.user.role as any,
+      role: result.user.role,
       gymId: result.user.gymId,
     };
     const token = signJWT(payload);
 
-    const isSecure = process.env.NODE_ENV === 'production' || 
-                     req.secure || 
-                     req.headers['x-forwarded-proto'] === 'https' ||
-                     (req.headers['host'] && req.headers['host'].includes('ngrok'));
-
     res.cookie('auth_token', token, {
       httpOnly: true,
-      secure: !!isSecure,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days in ms
       path: '/',
@@ -127,7 +121,7 @@ router.post('/register', async (req: any, res: Response): Promise<any> => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req: any, res: Response): Promise<any> => {
+router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -135,7 +129,7 @@ router.post('/login', async (req: any, res: Response): Promise<any> => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = await db.gymUser.findUnique({
+    const user = await prisma.gymUser.findUnique({
       where: { email },
       include: { gym: true },
     });
@@ -152,20 +146,15 @@ router.post('/login', async (req: any, res: Response): Promise<any> => {
     const payload = {
       userId: user.id,
       email: user.email,
-      role: user.role as any,
+      role: user.role,
       gymId: user.gymId,
     };
 
     const token = signJWT(payload);
 
-    const isSecure = process.env.NODE_ENV === 'production' || 
-                     req.secure || 
-                     req.headers['x-forwarded-proto'] === 'https' ||
-                     (req.headers['host'] && req.headers['host'].includes('ngrok'));
-
     res.cookie('auth_token', token, {
       httpOnly: true,
-      secure: !!isSecure,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days in ms
       path: '/',
@@ -188,7 +177,7 @@ router.post('/login', async (req: any, res: Response): Promise<any> => {
 });
 
 // POST /api/auth/logout
-router.post('/logout', (req: any, res: Response) => {
+router.post('/logout', (req, res) => {
   res.clearCookie('auth_token', { path: '/' });
   if (req.headers['content-type'] === 'application/x-www-form-urlencoded' || req.accepts('html')) {
     return res.redirect('/login');
@@ -197,13 +186,13 @@ router.post('/logout', (req: any, res: Response) => {
 });
 
 // GET /api/auth/me
-router.get('/me', authenticateToken, async (req: RequestWithUser, res: Response): Promise<any> => {
+router.get('/me', authenticateToken, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const user = await db.gymUser.findUnique({
+    const user = await prisma.gymUser.findUnique({
       where: { id: req.user.userId },
       include: { gym: true },
     });
@@ -223,99 +212,6 @@ router.get('/me', authenticateToken, async (req: RequestWithUser, res: Response)
     });
   } catch (error) {
     console.error('Me auth checking error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/* ================= FACEBOOK COMPLIANCE WEBHOOKS ================= */
-
-/**
- * Parses and validates Meta's signed_request payload
- */
-function parseSignedRequest(signedRequest: string, appSecret: string): any {
-  const parts = signedRequest.split('.');
-  if (parts.length !== 2) {
-    throw new Error('Invalid signed request format');
-  }
-  const [encodedSig, payloadStr] = parts;
-
-  // Base64url decode signature and payload
-  const sig = Buffer.from(encodedSig, 'base64url').toString('hex');
-  const payload = JSON.parse(Buffer.from(payloadStr, 'base64url').toString('utf-8'));
-
-  // Verify HMAC signature
-  const expectedSig = crypto
-    .createHmac('sha256', appSecret)
-    .update(payloadStr)
-    .digest('hex');
-
-  if (sig !== expectedSig) {
-    throw new Error('Invalid signature');
-  }
-
-  return payload;
-}
-
-// POST /api/auth/facebook/deauthorize
-router.post('/facebook/deauthorize', async (req: any, res: Response): Promise<any> => {
-  try {
-    const { signed_request } = req.body;
-    if (!signed_request) {
-      return res.status(400).json({ error: 'Missing signed_request parameter' });
-    }
-
-    const appSecret = process.env.FACEBOOK_APP_SECRET;
-    if (!appSecret) {
-      console.warn('[Facebook Deauthorize] App Secret not configured. Skipping signature verification.');
-    } else {
-      try {
-        const payload = parseSignedRequest(signed_request, appSecret);
-        console.log('[Facebook Deauthorize] Valid request received for User ID:', payload.user_id);
-      } catch (err: any) {
-        console.error('[Facebook Deauthorize] Signature verification failed:', err.message);
-        return res.status(400).json({ error: 'Signature verification failed' });
-      }
-    }
-
-    return res.json({ success: true, message: 'Deauthorization logged successfully.' });
-  } catch (error) {
-    console.error('Facebook deauthorize error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// POST /api/auth/facebook/delete-data
-router.post('/facebook/delete-data', async (req: any, res: Response): Promise<any> => {
-  try {
-    const { signed_request } = req.body;
-    if (!signed_request) {
-      return res.status(400).json({ error: 'Missing signed_request parameter' });
-    }
-
-    let userId = 'unknown';
-    const appSecret = process.env.FACEBOOK_APP_SECRET;
-    if (!appSecret) {
-      console.warn('[Facebook Data Deletion] App Secret not configured. Skipping signature verification.');
-    } else {
-      try {
-        const payload = parseSignedRequest(signed_request, appSecret);
-        userId = payload.user_id || 'unknown';
-        console.log('[Facebook Data Deletion] Valid deletion request for User ID:', userId);
-      } catch (err: any) {
-        console.error('[Facebook Data Deletion] Signature verification failed:', err.message);
-        return res.status(400).json({ error: 'Signature verification failed' });
-      }
-    }
-
-    const confirmationCode = `del_${userId}_${Date.now()}`;
-    const statusUrl = `https://fitwa.vercel.app/privacy?status=${confirmationCode}`;
-
-    return res.json({
-      url: statusUrl,
-      confirmation_code: confirmationCode,
-    });
-  } catch (error) {
-    console.error('Facebook data deletion error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
