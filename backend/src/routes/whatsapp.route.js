@@ -6,6 +6,12 @@ import { encrypt, decrypt } from "../utils/encryption.js";
 
 const router = Router({ mergeParams: true });
 
+// Configuration constants from environment variables
+const META_API_VERSION = process.env.META_API_VERSION || "v20.0";
+const DEFAULT_LANGUAGE = process.env.META_DEFAULT_LANGUAGE || "en_US";
+const DEFAULT_CODE_METHOD = process.env.META_CODE_METHOD || "SMS";
+const GRAPH_BASE_URL = process.env.META_GRAPH_BASE_URL || "https://graph.facebook.com";
+
 /**
  * Helper → Generate PIN
  */
@@ -19,7 +25,7 @@ const registerPhoneNumber = async (phoneNumberId, token) => {
   const pin = generatePin();
 
   const resp = await fetch(
-    `https://graph.facebook.com/v20.0/${phoneNumberId}/register`,
+    `${GRAPH_BASE_URL}/${META_API_VERSION}/${phoneNumberId}/register`,
     {
       method: "POST",
       headers: {
@@ -53,7 +59,7 @@ const registerPhoneNumber = async (phoneNumberId, token) => {
  */
 const subscribeApp = async (whatsappBusinessId, token) => {
   const resp = await fetch(
-    `https://graph.facebook.com/v20.0/${whatsappBusinessId}/subscribed_apps`,
+    `${GRAPH_BASE_URL}/${META_API_VERSION}/${whatsappBusinessId}/subscribed_apps`,
     {
       method: "POST",
       headers: {
@@ -83,7 +89,7 @@ const subscribeApp = async (whatsappBusinessId, token) => {
  */
 const fetchPhoneDetails = async (phoneNumberId, token) => {
   const resp = await fetch(
-    `https://graph.facebook.com/v20.0/${phoneNumberId}?fields=display_phone_number,verified_name,code_verification_status,quality_rating,platform_type,status`,
+    `${GRAPH_BASE_URL}/${META_API_VERSION}/${phoneNumberId}?fields=display_phone_number,verified_name,code_verification_status,quality_rating,platform_type,status`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -103,7 +109,7 @@ const fetchPhoneDetails = async (phoneNumberId, token) => {
 const fetchMessagingTier = async (whatsappBusinessId, phoneNumberId, token) => {
   try {
     const resp = await fetch(
-      `https://graph.facebook.com/v20.0/${whatsappBusinessId}/phone_numbers`,
+      `${GRAPH_BASE_URL}/${META_API_VERSION}/${whatsappBusinessId}/phone_numbers`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!resp.ok) return "UNKNOWN";
@@ -355,7 +361,7 @@ router.post(
       });
 
       const tokenResp = await fetch(
-        `https://graph.facebook.com/v20.0/oauth/access_token?${qs.toString()}`
+        `${GRAPH_BASE_URL}/${META_API_VERSION}/oauth/access_token?${qs.toString()}`
       );
       const tokenData = await tokenResp.json();
 
@@ -655,7 +661,7 @@ router.post(
       const phoneNumberId = gym.whatsapp_phone_number_id;
 
       const resp = await fetch(
-        `https://graph.facebook.com/v20.0/${phoneNumberId}/request_code`,
+        `${GRAPH_BASE_URL}/${META_API_VERSION}/${phoneNumberId}/request_code`,
         {
           method: "POST",
           headers: {
@@ -664,8 +670,8 @@ router.post(
           },
           body: JSON.stringify({
             messaging_product: "whatsapp",
-            code_method: "SMS",
-            language: "en_US",
+            code_method: DEFAULT_CODE_METHOD,
+            language: DEFAULT_LANGUAGE,
           }),
         }
       );
@@ -679,7 +685,7 @@ router.post(
         });
       }
 
-      res.json({ success: true, message: "Verification code requested via SMS" });
+      res.json({ success: true, message: `Verification code requested via ${DEFAULT_CODE_METHOD}` });
     } catch (err) {
       console.error("Request code error:", err);
       res.status(400).json({ error: err.message || "Failed to request verification code" });
@@ -719,7 +725,7 @@ router.post(
 
       // 1️⃣ Verify the code
       const verifyResp = await fetch(
-        `https://graph.facebook.com/v20.0/${phoneNumberId}/verify_code`,
+        `${GRAPH_BASE_URL}/${META_API_VERSION}/${phoneNumberId}/verify_code`,
         {
           method: "POST",
           headers: {
@@ -798,7 +804,7 @@ router.post(
       const wabaId = gym.whatsapp_waba_id;
 
       const resp = await fetch(
-        `https://graph.facebook.com/v20.0/${wabaId}/message_templates?limit=100`,
+        `${GRAPH_BASE_URL}/${META_API_VERSION}/${wabaId}/message_templates?limit=100`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

@@ -8,7 +8,9 @@ import { initSocket } from "./socket.js";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import whatsappRouter from "./routes/whatsapp.route.js";
+import whatsappWebhookRouter from "./routes/whatsappWebhook.route.js";
 import { authenticateToken, scopeToGym } from "./middleware/auth.js";
+
 
 const app = express();
 app.set("trust proxy", 1);
@@ -24,6 +26,7 @@ const allowedOrigins = process.env.FRONTEND_URL
 app.use(
   cors({
     origin: (origin, callback) => {
+      console.log(`🔒 CORS origin request: "${origin}" | Allowed:`, allowedOrigins);
       // Allow requests with no origin (like mobile apps, curl, postman)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -47,6 +50,8 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/dashboard/:gymSlug/whatsapp", authenticateToken, scopeToGym, whatsappRouter);
+app.use("/webhook", whatsappWebhookRouter);
+
 
 
 /* ================= ERROR HANDLING ================= */
