@@ -155,20 +155,20 @@ router.post("/", async (req, res) => {
             },
           });
           console.log(`💾 Updated status in DB for message ${messageId} to ${metaState.toUpperCase()}`);
-        } else {
-          console.log(`⚠️ No matching outbound message found in DB for Status ID: ${messageId}`);
-        }
 
-        // Always log raw event for auditing
-        await prisma.whatsAppEvent.create({
-          data: {
-            messageId,
-            eventType: metaState.toUpperCase(),
-            timestamp: new Date(Number(statusObj.timestamp) * 1000),
-            rawPayload: statusObj,
-          },
-        });
-        console.log(`💾 Logged raw WhatsApp event for message ID: ${messageId}`);
+          // Log raw event for auditing since the message exists
+          await prisma.whatsAppEvent.create({
+            data: {
+              messageId,
+              eventType: metaState.toUpperCase(),
+              timestamp: new Date(Number(statusObj.timestamp) * 1000),
+              rawPayload: statusObj,
+            },
+          });
+          console.log(`💾 Logged raw WhatsApp event for message ID: ${messageId}`);
+        } else {
+          console.log(`⚠️ No matching outbound message found in DB for Status ID: ${messageId}. Skipping status update and event logging.`);
+        }
 
         // Trigger WebSocket updates for status changes
         if (message) {
