@@ -68,6 +68,51 @@ interface FormButton {
   value: string;
 }
 
+const statusOptions = [
+  { value: 'ALL', label: 'All Statuses' },
+  { value: 'DRAFT', label: 'Drafts' },
+  { value: 'PENDING', label: 'Pending Approval' },
+  { value: 'APPROVED', label: 'Approved' },
+  { value: 'REJECTED', label: 'Rejected' },
+];
+
+const categoryOptions = [
+  { value: 'ALL', label: 'All Categories' },
+  { value: 'UTILITY', label: 'Utility' },
+  { value: 'MARKETING', label: 'Marketing' },
+  { value: 'AUTHENTICATION', label: 'Authentication' },
+];
+
+const getStatusBadge = (status: string) => {
+  const s = (status || '').toUpperCase();
+  if (s === 'APPROVED') {
+    return (
+      <span className="font-bold text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.4)] flex items-center gap-1.5 mt-1">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> APPROVED
+      </span>
+    );
+  }
+  if (s === 'PENDING') {
+    return (
+      <span className="font-bold text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.4)] flex items-center gap-1.5 mt-1">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> PENDING
+      </span>
+    );
+  }
+  if (s === 'REJECTED') {
+    return (
+      <span className="font-bold text-rose-500 drop-shadow-[0_0_6px_rgba(244,63,94,0.4)] flex items-center gap-1.5 mt-1">
+        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> REJECTED
+      </span>
+    );
+  }
+  return (
+    <span className="font-bold text-violet-400 drop-shadow-[0_0_6px_rgba(167,139,250,0.4)] flex items-center gap-1.5 mt-1">
+      <span className="h-1.5 w-1.5 rounded-full bg-violet-400" /> LOCAL DRAFT
+    </span>
+  );
+};
+
 export default function MessageTemplatesPage() {
   const { gymSlug } = useParams() as { gymSlug: string };
   const router = useRouter();
@@ -89,6 +134,27 @@ export default function MessageTemplatesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentTheme, setCurrentTheme] = useState<string>('dark');
   const [showFilters, setShowFilters] = useState(true);
+
+  // Custom Dropdowns State
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+        setIsStatusOpen(false);
+      }
+      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+        setIsCategoryOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -373,11 +439,6 @@ export default function MessageTemplatesPage() {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  // Stats Counters
-  const totalCount = templates.length;
-  const approvedCount = templates.filter(t => t.status.toUpperCase() === 'APPROVED' || t.status.toUpperCase() === 'ACTIVE').length;
-  const pendingCount = templates.filter(t => t.status.toUpperCase() === 'PENDING').length;
-  const draftCount = templates.filter(t => t.status === 'draft').length;
 
   return (
     <div className="space-y-8 pb-16">
@@ -399,7 +460,11 @@ export default function MessageTemplatesPage() {
           <button
             onClick={handleSyncAllTemplates}
             disabled={syncingAll || !isConnected}
-            className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-xs font-bold text-zinc-300 transition-all hover:bg-zinc-850 disabled:opacity-50"
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all disabled:opacity-50 ${
+              currentTheme === 'dark'
+                ? 'neon-btn-secondary'
+                : 'border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-850'
+            }`}
           >
             <RefreshCcw className={`h-3.5 w-3.5 ${syncingAll ? 'animate-spin' : ''}`} />
             Sync from Meta
@@ -407,7 +472,11 @@ export default function MessageTemplatesPage() {
 
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-cyan-500"
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
+              currentTheme === 'dark'
+                ? 'neon-btn-primary'
+                : 'bg-cyan-600 text-white hover:bg-cyan-500'
+            }`}
           >
             <Plus className="h-4 w-4" />
             Create Template
@@ -434,65 +503,14 @@ export default function MessageTemplatesPage() {
         </div>
       )}
 
-      {/* Stats Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Templates */}
-        <div className="group relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-800">
-          <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-cyan-500/10 blur-xl opacity-50 group-hover:opacity-80 transition-all duration-300" />
-          <div className="flex items-center justify-between">
-            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Total Templates</span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/5 text-cyan-400">
-              <FileText className="h-4 w-4" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-white mt-2 block metric-glow-cyan">{totalCount}</span>
-        </div>
-
-        {/* Approved */}
-        <div className="group relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-800">
-          <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl opacity-50 group-hover:opacity-80 transition-all duration-300" />
-          <div className="flex items-center justify-between">
-            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Approved / Active</span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/5 text-emerald-400">
-              <CheckCircle className="h-4 w-4" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-emerald-400 mt-2 block metric-glow-emerald">{approvedCount}</span>
-        </div>
-
-        {/* Pending */}
-        <div className="group relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-800">
-          <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-500/10 blur-xl opacity-50 group-hover:opacity-80 transition-all duration-300" />
-          <div className="flex items-center justify-between">
-            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Pending Meta</span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/5 text-amber-400">
-              <AlertCircle className="h-4 w-4" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-amber-500 mt-2 block metric-glow-orange">{pendingCount}</span>
-        </div>
-
-        {/* Local Drafts */}
-        <div className="group relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-800">
-          <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-violet-500/10 blur-xl opacity-50 group-hover:opacity-80 transition-all duration-300" />
-          <div className="flex items-center justify-between">
-            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Local Drafts</span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/5 text-violet-400">
-              <FileText className="h-4 w-4" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-zinc-400 mt-2 block metric-glow-violet">{draftCount}</span>
-        </div>
-      </div>
-
       {/* Toolbar Filters Panel */}
       <div className={`rounded-2xl p-4 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs transition-all duration-300 ${
         currentTheme === 'dark' ? 'border border-transparent bg-transparent' : 'border border-zinc-850 bg-zinc-950/70'
       }`}>
-        <div className="flex flex-1 flex-col sm:flex-row items-center gap-3">
+        <div className="flex flex-1 flex-col sm:flex-row items-center justify-between gap-3 w-full">
           {/* Custom Glowing Neon Search Input for Dark Theme */}
           {currentTheme === 'dark' ? (
-            <div id="neon-poda" className="shrink-0 scale-90 sm:scale-95 origin-left">
+            <div id="neon-poda" className="flex-1 w-full">
               <div className="neon-glow"></div>
               <div className="neon-darkBorderBg"></div>
               <div className="neon-darkBorderBg"></div>
@@ -581,29 +599,107 @@ export default function MessageTemplatesPage() {
 
           {/* Filters Selectors Dropdowns */}
           {(showFilters || currentTheme !== 'dark') && (
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-xl border border-zinc-850 bg-zinc-900/40 px-3.5 py-2.5 text-zinc-300 focus:outline-none focus:border-cyan-500 cursor-pointer text-xs"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="DRAFT">Drafts</option>
-                <option value="PENDING">Pending Approval</option>
-                <option value="APPROVED">Approved</option>
-                <option value="REJECTED">Rejected</option>
-              </select>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto sm:ml-auto">
+              {currentTheme === 'dark' ? (
+                <>
+                  {/* Custom Status Dropdown */}
+                  <div ref={statusRef} className="relative w-full sm:w-[180px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsStatusOpen(!isStatusOpen);
+                        setIsCategoryOpen(false);
+                      }}
+                      className="neon-select w-full sm:w-[180px] text-left flex items-center justify-between"
+                    >
+                      <span>
+                        {statusOptions.find((o) => o.value === statusFilter)?.label || 'All Statuses'}
+                      </span>
+                      <span className="w-3 h-3 flex items-center justify-center pointer-events-none opacity-0"></span>
+                    </button>
+                    {isStatusOpen && (
+                      <div className="neon-dropdown-menu w-full sm:w-[180px]">
+                        {statusOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              setStatusFilter(opt.value);
+                              setIsStatusOpen(false);
+                            }}
+                            className={`neon-dropdown-item ${
+                              statusFilter === opt.value ? 'neon-dropdown-item-active' : ''
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="rounded-xl border border-zinc-850 bg-zinc-900/40 px-3.5 py-2.5 text-zinc-300 focus:outline-none focus:border-cyan-500 cursor-pointer text-xs"
-              >
-                <option value="ALL">All Categories</option>
-                <option value="UTILITY">Utility</option>
-                <option value="MARKETING">Marketing</option>
-                <option value="AUTHENTICATION">Authentication</option>
-              </select>
+                  {/* Custom Category Dropdown */}
+                  <div ref={categoryRef} className="relative w-full sm:w-[180px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCategoryOpen(!isCategoryOpen);
+                        setIsStatusOpen(false);
+                      }}
+                      className="neon-select w-full sm:w-[180px] text-left flex items-center justify-between"
+                    >
+                      <span>
+                        {categoryOptions.find((o) => o.value === categoryFilter)?.label || 'All Categories'}
+                      </span>
+                      <span className="w-3 h-3 flex items-center justify-center pointer-events-none opacity-0"></span>
+                    </button>
+                    {isCategoryOpen && (
+                      <div className="neon-dropdown-menu w-full sm:w-[180px]">
+                        {categoryOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              setCategoryFilter(opt.value);
+                              setIsCategoryOpen(false);
+                            }}
+                            className={`neon-dropdown-item ${
+                              categoryFilter === opt.value ? 'neon-dropdown-item-active' : ''
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="rounded-xl border border-zinc-850 bg-zinc-900/40 px-3.5 py-2.5 text-zinc-300 focus:outline-none focus:border-cyan-500 cursor-pointer text-xs"
+                  >
+                    <option value="ALL">All Statuses</option>
+                    <option value="DRAFT">Drafts</option>
+                    <option value="PENDING">Pending Approval</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="rounded-xl border border-zinc-850 bg-zinc-900/40 px-3.5 py-2.5 text-zinc-300 focus:outline-none focus:border-cyan-500 cursor-pointer text-xs"
+                  >
+                    <option value="ALL">All Categories</option>
+                    <option value="UTILITY">Utility</option>
+                    <option value="MARKETING">Marketing</option>
+                    <option value="AUTHENTICATION">Authentication</option>
+                  </select>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -612,19 +708,31 @@ export default function MessageTemplatesPage() {
           <span className="text-zinc-500 font-semibold mr-1">View:</span>
           <button
             onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-lg border transition-all ${viewMode === 'grid'
-                ? 'border-cyan-500/30 bg-cyan-500/5 text-cyan-400'
-                : 'border-zinc-850 bg-zinc-900/20 text-zinc-500 hover:text-zinc-300'
-              }`}
+            className={
+              currentTheme === 'dark'
+                ? viewMode === 'grid'
+                  ? 'neon-view-btn-active'
+                  : 'neon-view-btn'
+                : `p-2 rounded-lg border transition-all ${viewMode === 'grid'
+                    ? 'border-cyan-500/30 bg-cyan-500/5 text-cyan-400'
+                    : 'border-zinc-850 bg-zinc-900/20 text-zinc-500 hover:text-zinc-300'
+                  }`
+            }
           >
             <LayoutGrid className="h-4 w-4" />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-2 rounded-lg border transition-all ${viewMode === 'list'
-                ? 'border-cyan-500/30 bg-cyan-500/5 text-cyan-400'
-                : 'border-zinc-850 bg-zinc-900/20 text-zinc-500 hover:text-zinc-300'
-              }`}
+            className={
+              currentTheme === 'dark'
+                ? viewMode === 'list'
+                  ? 'neon-view-btn-active'
+                  : 'neon-view-btn'
+                : `p-2 rounded-lg border transition-all ${viewMode === 'list'
+                    ? 'border-cyan-500/30 bg-cyan-500/5 text-cyan-400'
+                    : 'border-zinc-850 bg-zinc-900/20 text-zinc-500 hover:text-zinc-300'
+                  }`
+            }
           >
             <List className="h-4 w-4" />
           </button>
@@ -870,22 +978,26 @@ export default function MessageTemplatesPage() {
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
             />
 
-            {/* Sliding drawer */}
+             {/* Sliding drawer */}
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed right-0 top-0 h-full w-full max-w-md bg-zinc-950 border-l border-zinc-900 shadow-2xl z-50 flex flex-col justify-between"
+              className="fixed right-0 top-0 h-full w-full max-w-md bg-zinc-950/80 backdrop-blur-xl border-l border-zinc-900 shadow-2xl z-50 flex flex-col justify-between overflow-hidden"
             >
+              {/* Decorative glows */}
+              <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+              <div className="absolute -left-20 -bottom-20 h-48 w-48 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
+
               {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-zinc-900 p-5">
+              <div className="flex items-center justify-between border-b border-zinc-900/60 p-5 relative z-10 bg-zinc-950/40">
                 <div>
                   <h3 className="font-extrabold text-sm text-white flex items-center gap-1.5 uppercase tracking-wide">
-                    <Eye className="h-4 w-4 text-cyan-400" />
+                    <Eye className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
                     Template Preview
                   </h3>
-                  <span className="text-[10px] text-zinc-500 font-mono mt-0.5 block">{selectedTemplate.templateName}</span>
+                  <span className="text-[10px] text-zinc-400 font-mono mt-1.5 px-2 py-0.5 rounded bg-zinc-900/60 border border-zinc-800/80 w-fit block">{selectedTemplate.templateName}</span>
                 </div>
                 <button
                   onClick={() => setSelectedTemplate(null)}
@@ -896,91 +1008,124 @@ export default function MessageTemplatesPage() {
               </div>
 
               {/* Drawer Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 relative z-10">
                 {/* Meta details cards */}
-                <div className="grid grid-cols-2 gap-3 bg-zinc-900/20 p-4 border border-zinc-900 rounded-xl text-xs">
-                  <div>
-                    <span className="text-zinc-500 block text-[9px] uppercase tracking-wider">Approval Status</span>
-                    <span className="font-bold text-white mt-1 block uppercase">{selectedTemplate.status}</span>
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300">
+                    <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Approval Status</span>
+                    {getStatusBadge(selectedTemplate.status)}
                   </div>
-                  <div>
-                    <span className="text-zinc-500 block text-[9px] uppercase tracking-wider">Template Category</span>
-                    <span className="font-bold text-white mt-1 block uppercase">{selectedTemplate.category}</span>
+                  
+                  <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300">
+                    <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Template Category</span>
+                    <span className="font-bold text-zinc-100 mt-1 block uppercase text-xs">{selectedTemplate.category}</span>
                   </div>
-                  <div className="mt-3">
-                    <span className="text-zinc-500 block text-[9px] uppercase tracking-wider">Language Code</span>
-                    <span className="font-bold text-zinc-300 mt-1 block uppercase">{selectedTemplate.language}</span>
+                  
+                  <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300">
+                    <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Language Code</span>
+                    <span className="font-bold text-zinc-300 mt-1 block uppercase text-xs">{selectedTemplate.language}</span>
                   </div>
-                  <div className="mt-3">
-                    <span className="text-zinc-500 block text-[9px] uppercase tracking-wider">Meta ID</span>
-                    <span className="font-bold text-zinc-400 mt-1 block truncate" title={selectedTemplate.metaTemplateId || 'N/A'}>
+                  
+                  <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300">
+                    <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Meta ID</span>
+                    <span className="font-mono text-zinc-400 mt-1 block truncate text-[11px]" title={selectedTemplate.metaTemplateId || 'N/A'}>
                       {selectedTemplate.metaTemplateId || 'Not registered'}
                     </span>
                   </div>
                 </div>
 
-                {/* WhatsApp Chat Preview Bubble */}
-                <div className="space-y-2">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Mock Mockup Preview</span>
+                {/* WhatsApp Chat Preview */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#00a884] animate-pulse" />
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">WhatsApp Message Preview</span>
+                  </div>
 
-                  <div className="rounded-2xl bg-[#0b141a] border border-[#202c33] p-4 max-w-xs space-y-2 relative overflow-hidden shadow-lg">
-                    {/* Background WhatsApp Doodle grid effect */}
-                    <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
-
-                    {/* Chat components inside bubble */}
-                    <div className="relative space-y-1.5 text-xs text-white">
-                      {/* Header element */}
-                      {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'TEXT' && (
-                        <div className="font-bold text-white text-xs border-b border-[#202c33] pb-1">
-                          {getComponentOf(selectedTemplate.components, 'HEADER')?.text}
+                  <div className="rounded-2xl border border-[#2d3a42]/60 bg-[#0b141a] overflow-hidden shadow-2xl max-w-full sm:max-w-xs font-sans relative">
+                    {/* WhatsApp Header Mockup */}
+                    <div className="bg-[#202c33] px-3.5 py-2.5 flex items-center justify-between border-b border-[#2d3a42]">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-zinc-400 text-sm cursor-pointer select-none">←</span>
+                        <div className="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-xs">
+                          <FileText className="w-4 h-4 text-white" />
                         </div>
-                      )}
-                      {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(getComponentOf(selectedTemplate.components, 'HEADER')?.format || '') && (
-                        <div className="rounded-lg bg-[#202c33]/50 border border-[#202c33] p-6 text-center text-[10px] text-zinc-400 flex flex-col items-center justify-center gap-1.5">
-                          <Upload className="h-5 w-5 text-cyan-400" />
-                          <span>{getComponentOf(selectedTemplate.components, 'HEADER')?.format} Header</span>
-                          <span className="text-[8px] text-zinc-500 truncate max-w-[160px]">
-                            {getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_originalname || 'draft-file'}
-                          </span>
+                        <div>
+                          <span className="block text-xs font-bold text-[#e9edef] leading-tight">Gym Member</span>
+                          <span className="block text-[9px] text-[#00a884] leading-tight font-semibold">online</span>
                         </div>
-                      )}
+                      </div>
+                      <div className="flex gap-3 text-zinc-400 text-[10px] select-none">
+                        <span>📞</span>
+                        <span>⋮</span>
+                      </div>
+                    </div>
 
-                      {/* Body element */}
-                      <div className="whitespace-pre-wrap leading-relaxed text-[#e9edef] text-xs">
-                        {getComponentOf(selectedTemplate.components, 'BODY')?.text}
+                    {/* Chat Area Mockup */}
+                    <div className="p-3.5 space-y-3 relative bg-[#0b141a] min-h-[220px] flex flex-col justify-end">
+                      {/* Background WhatsApp Doodle grid effect */}
+                      <div className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none" />
+
+                      {/* Chat Message Bubble (Outgoing) */}
+                      <div className="relative self-end bg-[#005c4b] text-[#e9edef] p-3 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-[#005c4b] z-10 flex flex-col">
+                        {/* Header element */}
+                        {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'TEXT' && (
+                          <div className="font-bold text-white text-xs border-b border-[#00705a] pb-1 mb-1.5">
+                            {getComponentOf(selectedTemplate.components, 'HEADER')?.text}
+                          </div>
+                        )}
+                        {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(getComponentOf(selectedTemplate.components, 'HEADER')?.format || '') && (
+                          <div className="rounded-lg bg-black/20 border border-[#004f40] p-4 text-center text-[10px] text-zinc-300 flex flex-col items-center justify-center gap-1.5 mb-1.5">
+                            <Upload className="h-4 w-4 text-cyan-400" />
+                            <span className="font-bold">{getComponentOf(selectedTemplate.components, 'HEADER')?.format}</span>
+                            <span className="text-[8px] text-[#8696a0] truncate max-w-[150px]">
+                              {getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_originalname || 'draft-file'}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Body element */}
+                        <div className="whitespace-pre-wrap leading-relaxed text-xs break-words">
+                          {getComponentOf(selectedTemplate.components, 'BODY')?.text}
+                        </div>
+
+                        {/* Footer element */}
+                        {getComponentOf(selectedTemplate.components, 'FOOTER') && (
+                          <div className="text-[9px] text-[#e9edef]/60 mt-1 block">
+                            {getComponentOf(selectedTemplate.components, 'FOOTER')?.text}
+                          </div>
+                        )}
+
+                        {/* Timestamp & checkmarks */}
+                        <div className="self-end flex items-center gap-1 mt-1 text-[8px] text-[#e9edef]/60 leading-none">
+                          <span>12:34 PM</span>
+                          <span className="text-[#53bdeb]">✓✓</span>
+                        </div>
                       </div>
 
-                      {/* Footer element */}
-                      {getComponentOf(selectedTemplate.components, 'FOOTER') && (
-                        <div className="text-[10px] text-[#8696a0] mt-1 block">
-                          {getComponentOf(selectedTemplate.components, 'FOOTER')?.text}
+                      {/* Interactive Buttons listing underneath outgoing bubble */}
+                      {getComponentOf(selectedTemplate.components, 'BUTTONS') && (
+                        <div className="self-end w-full max-w-[90%] space-y-1.5 z-10">
+                          {getComponentOf(selectedTemplate.components, 'BUTTONS')?.buttons?.map((btn: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="w-full bg-[#202c33] hover:bg-[#2a3942] border border-[#2d3a42] rounded-lg py-1.5 px-3 text-[11px] text-[#53bdeb] font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm"
+                            >
+                              {btn.type === 'URL' && <ExternalLink className="h-3 w-3" />}
+                              {btn.text}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
                   </div>
-
-                  {/* Buttons listing underneath chat bubble */}
-                  {getComponentOf(selectedTemplate.components, 'BUTTONS') && (
-                    <div className="space-y-1 mt-2 max-w-xs">
-                      {getComponentOf(selectedTemplate.components, 'BUTTONS')?.buttons?.map((btn: any, idx: number) => (
-                        <div
-                          key={idx}
-                          className="w-full bg-[#202c33] hover:bg-[#202c33]/80 border border-[#202c33] rounded-lg py-2 px-3 text-xs text-[#00a884] font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all"
-                        >
-                          {btn.type === 'URL' && <ExternalLink className="h-3 w-3" />}
-                          {btn.text}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
 
               {/* Drawer Footer Actions */}
-              <div className="border-t border-zinc-900 p-5 bg-zinc-950/60 flex items-center justify-between gap-3">
+              <div className="border-t border-zinc-900/60 p-5 bg-[#0b0b0f]/60 backdrop-blur-md flex items-center justify-between gap-3 relative z-10">
                 <button
                   onClick={() => setSelectedTemplate(null)}
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 py-2.5 text-xs font-bold text-zinc-400 hover:text-white transition-all"
+                  className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-secondary"
                 >
                   Close
                 </button>
@@ -992,7 +1137,7 @@ export default function MessageTemplatesPage() {
                       setSelectedTemplate(null);
                     }}
                     disabled={!isConnected}
-                    className="w-full flex items-center justify-center gap-1 rounded-xl bg-cyan-600 py-2.5 text-xs font-bold text-white transition-all hover:bg-cyan-500 disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-primary disabled:opacity-50"
                   >
                     <Send className="h-3.5 w-3.5" /> Submit to Meta
                   </button>
@@ -1002,7 +1147,7 @@ export default function MessageTemplatesPage() {
                       handleSyncTemplateStatus(selectedTemplate.id);
                       setSelectedTemplate(null);
                     }}
-                    className="w-full flex items-center justify-center gap-1 rounded-xl bg-cyan-600/10 border border-cyan-500/20 py-2.5 text-xs font-bold text-cyan-400 transition-all hover:bg-cyan-500/20"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-primary"
                   >
                     <RefreshCcw className="h-3.5 w-3.5" /> Sync Status
                   </button>

@@ -281,21 +281,52 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
 .neon-border,
 .neon-darkBorderBg,
 .neon-glow {
-  max-height: 70px;
-  max-width: 550px;
-  height: 100%;
-  width: 100%;
   position: absolute;
   overflow: hidden;
   z-index: -1;
+  transition: all 0.3s ease;
+}
+
+.neon-glow {
+  top: -30px;
+  bottom: -30px;
+  left: -30px;
+  right: -30px;
+  filter: blur(30px);
+  opacity: 0.45;
   border-radius: 12px;
-  filter: blur(3px);
+}
+
+.neon-white {
+  top: 3.5px;
+  bottom: 3.5px;
+  left: 3.5px;
+  right: 3.5px;
+  border-radius: 10px;
+  filter: blur(2px);
+}
+
+.neon-border {
+  top: 5.5px;
+  bottom: 5.5px;
+  left: 5.5px;
+  right: 5.5px;
+  border-radius: 11px;
+  filter: blur(0.5px);
+}
+
+.neon-darkBorderBg {
+  top: 2.5px;
+  bottom: 2.5px;
+  left: 1px;
+  right: 1px;
+  border-radius: 12px;
 }
 
 .neon-input {
   background-color: #010201;
   border: none;
-  width: 537px;
+  width: 100%;
   height: 56px;
   border-radius: 10px;
   color: white;
@@ -308,7 +339,7 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
   align-items: center;
   justify-content: center;
   position: relative;
-  width: 550px;
+  width: 100%;
   height: 70px;
 }
 
@@ -337,13 +368,6 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
   opacity: 0;
 }
 
-.neon-white {
-  max-height: 63px;
-  max-width: 543px;
-  border-radius: 10px;
-  filter: blur(2px);
-}
-
 .neon-white::before {
   content: "";
   z-index: -2;
@@ -352,8 +376,8 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
   left: 50%;
   transform: translate(-50%, -50%) rotate(83deg);
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: 2000px;
+  height: 2000px;
   background-repeat: no-repeat;
   background-position: 0 0;
   filter: brightness(1.4);
@@ -368,13 +392,6 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
   transition: all 2s;
 }
 
-.neon-border {
-  max-height: 59px;
-  max-width: 539px;
-  border-radius: 11px;
-  filter: blur(0.5px);
-}
-
 .neon-border::before {
   content: "";
   z-index: -2;
@@ -383,8 +400,8 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
   left: 50%;
   transform: translate(-50%, -50%) rotate(70deg);
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: 2000px;
+  height: 2000px;
   filter: brightness(1.3);
   background-repeat: no-repeat;
   background-position: 0 0;
@@ -399,11 +416,6 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
   transition: all 2s;
 }
 
-.neon-darkBorderBg {
-  max-height: 65px;
-  max-width: 548px;
-}
-
 .neon-darkBorderBg::before {
   content: "";
   z-index: -2;
@@ -412,8 +424,8 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
   left: 50%;
   transform: translate(-50%, -50%) rotate(82deg);
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: 2000px;
+  height: 2000px;
   background-repeat: no-repeat;
   background-position: 0 0;
   background-image: conic-gradient(
@@ -470,14 +482,6 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
   transition: all 4s;
 }
 
-.neon-glow {
-  overflow: hidden;
-  filter: blur(30px);
-  opacity: 0.4;
-  max-height: 130px;
-  max-width: 590px;
-}
-
 .neon-glow:before {
   content: "";
   z-index: -2;
@@ -486,8 +490,8 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
   left: 50%;
   transform: translate(-50%, -50%) rotate(60deg);
   position: absolute;
-  width: 999px;
-  height: 999px;
+  width: 2000px;
+  height: 2000px;
   background-repeat: no-repeat;
   background-position: 0 0;
   background-image: conic-gradient(
@@ -555,7 +559,11 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
 }
 
 #neon-main {
-  position: relative;
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  top: 7px;
+  bottom: 7px;
 }
 
 #neon-search-icon {
@@ -569,3 +577,327 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
     transform: translate(-50%, -50%) rotate(450deg);
   }
 }
+
+/* =====================================================
+   CUSTOM GLOWING NEON FILTERS & BUTTONS (DARK MODE)
+   ===================================================== */
+
+[data-theme="dark"] .neon-select,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-select {
+  background-color: #010201;
+  border: 1.5px solid rgba(160, 153, 216, 0.35);
+  border-radius: 12px;
+  color: #c0b9c0;
+  padding: 10px 36px 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a099d8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 14px;
+  box-shadow: 0 0 8px rgba(160, 153, 216, 0.1), inset 0 0 4px rgba(223, 162, 218, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.025em;
+  font-family: inherit;
+}
+
+[data-theme="dark"] .neon-select:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-select:hover {
+  border-color: rgba(223, 162, 218, 0.7);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(223, 162, 218, 0.35), inset 0 0 6px rgba(223, 162, 218, 0.15);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dfa2da' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .neon-select:focus,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-select:focus {
+  outline: none;
+  border-color: #cf30aa;
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(207, 48, 170, 0.5), inset 0 0 8px rgba(207, 48, 170, 0.25);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cf30aa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .neon-select option,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-select option {
+  background-color: #0d0d11;
+  color: #e4e4e7;
+  padding: 12px;
+}
+
+[data-theme="dark"] .neon-view-btn,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-view-btn {
+  background-color: #010201;
+  border: 1.5px solid rgba(160, 153, 216, 0.2);
+  color: #71717a;
+  border-radius: 10px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .neon-view-btn:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-view-btn:hover {
+  border-color: rgba(160, 153, 216, 0.5);
+  color: #a099d8;
+  box-shadow: 0 0 10px rgba(160, 153, 216, 0.2);
+}
+
+[data-theme="dark"] .neon-view-btn-active,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-view-btn-active {
+  background-color: #010201;
+  border: 1.5px solid #cf30aa;
+  color: #dfa2da;
+  border-radius: 10px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 15px rgba(207, 48, 170, 0.4), inset 0 0 5px rgba(207, 48, 170, 0.15);
+}
+
+[data-theme="dark"] .neon-view-btn-active:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-view-btn-active:hover {
+  box-shadow: 0 0 20px rgba(207, 48, 170, 0.6), inset 0 0 8px rgba(207, 48, 170, 0.25);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .neon-btn-primary,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-btn-primary {
+  background: linear-gradient(135deg, #402fb5, #cf30aa);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 0 15px rgba(207, 48, 170, 0.4), 0 0 5px rgba(64, 47, 181, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+[data-theme="dark"] .neon-btn-primary:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-btn-primary:hover {
+  box-shadow: 0 0 25px rgba(207, 48, 170, 0.75), 0 0 10px rgba(64, 47, 181, 0.5);
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+[data-theme="dark"] .neon-btn-primary:active,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-btn-primary:active {
+  transform: translateY(1px);
+}
+
+[data-theme="dark"] .neon-btn-secondary,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-btn-secondary {
+  background-color: #010201;
+  border: 1.5px solid rgba(160, 153, 216, 0.35);
+  color: #c0b9c0;
+  box-shadow: 0 0 8px rgba(160, 153, 216, 0.1), inset 0 0 4px rgba(223, 162, 218, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+[data-theme="dark"] .neon-btn-secondary:hover:not(:disabled),
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-btn-secondary:hover:not(:disabled) {
+  border-color: rgba(223, 162, 218, 0.7);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(223, 162, 218, 0.35), inset 0 0 6px rgba(223, 162, 218, 0.15);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .neon-btn-secondary:active:not(:disabled),
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-btn-secondary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* =====================================================
+   CUSTOM NEON DROPDOWN POPOVER & ITEM STYLING
+   ===================================================== */
+
+[data-theme="dark"] .neon-dropdown-menu,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 180px;
+  background-color: #0b0b0f;
+  border: 1.5px solid rgba(160, 153, 216, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8), 0 0 15px rgba(160, 153, 216, 0.15);
+  padding: 6px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: neon-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes neon-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-theme="dark"] .neon-dropdown-item,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-dropdown-item {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #c0b9c0;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .neon-dropdown-item:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-dropdown-item:hover {
+  background-color: rgba(160, 153, 216, 0.12);
+  color: #ffffff;
+  padding-left: 15px;
+}
+
+[data-theme="dark"] .neon-dropdown-item-active,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-dropdown-item-active {
+  background-color: #cf30aa;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .neon-dropdown-item-active:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-dropdown-item-active:hover {
+  background-color: #dfa2da;
+  color: #ffffff;
+}
+
+/* =====================================================
+   CUSTOM NEON STATS CARDS (DARK & LIGHT MODE)
+   ===================================================== */
+
+[data-theme="dark"] .neon-stats-card,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-stats-card {
+  position: relative;
+  background-color: rgba(9, 9, 11, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] .neon-stats-card::after,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .neon-stats-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2.5px;
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+[data-theme="dark"] .card-cyan::after,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-cyan::after {
+  background: linear-gradient(90deg, #06b6d4, transparent);
+}
+[data-theme="dark"] .card-cyan:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-cyan:hover {
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 10px 30px -10px rgba(6, 182, 212, 0.15), 0 0 15px rgba(6, 182, 212, 0.05);
+  transform: translateY(-2px);
+}
+[data-theme="dark"] .card-cyan:hover::after,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-cyan:hover::after {
+  opacity: 1;
+}
+
+[data-theme="dark"] .card-emerald::after,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-emerald::after {
+  background: linear-gradient(90deg, #10b981, transparent);
+}
+[data-theme="dark"] .card-emerald:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-emerald:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.15), 0 0 15px rgba(16, 185, 129, 0.05);
+  transform: translateY(-2px);
+}
+[data-theme="dark"] .card-emerald:hover::after,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-emerald:hover::after {
+  opacity: 1;
+}
+
+[data-theme="dark"] .card-amber::after,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-amber::after {
+  background: linear-gradient(90deg, #f59e0b, transparent);
+}
+[data-theme="dark"] .card-amber:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-amber:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.15), 0 0 15px rgba(245, 158, 11, 0.05);
+  transform: translateY(-2px);
+}
+[data-theme="dark"] .card-amber:hover::after,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-amber:hover::after {
+  opacity: 1;
+}
+
+[data-theme="dark"] .card-violet::after,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-violet::after {
+  background: linear-gradient(90deg, #8b5cf6, transparent);
+}
+[data-theme="dark"] .card-violet:hover,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-violet:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.15), 0 0 15px rgba(139, 92, 246, 0.05);
+  transform: translateY(-2px);
+}
+[data-theme="dark"] .card-violet:hover::after,
+:root:not([data-theme="light"]):not([data-theme="coloured"]) .card-violet:hover::after {
+  opacity: 1;
+}
+
+/* Light / Coloured theme fallback for stats cards */
+[data-theme="light"] .neon-stats-card {
+  position: relative;
+  background-color: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+[data-theme="light"] .neon-stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  border-color: #d4d4d8;
+}
+
+[data-theme="coloured"] .neon-stats-card {
+  position: relative;
+  background-color: #ffffff;
+  border: 1px solid rgba(74, 112, 169, 0.15);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(74, 112, 169, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+[data-theme="coloured"] .neon-stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(74, 112, 169, 0.12);
+  border-color: rgba(74, 112, 169, 0.3);
+}
+
+
+
