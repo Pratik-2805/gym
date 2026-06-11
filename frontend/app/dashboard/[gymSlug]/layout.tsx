@@ -53,7 +53,7 @@ export default async function DashboardLayout(props: DashboardLayoutProps) {
   ];
 
   return (
-    <div className="flex min-h-screen bg-zinc-950 font-sans text-zinc-100 relative overflow-hidden">
+    <div className="flex h-screen bg-zinc-950 font-sans text-zinc-100 relative overflow-hidden">
       {/* Background Lights */}
       <div className="absolute left-0 top-0 h-[400px] w-[400px] rounded-full bg-cyan-600/5 blur-[100px]" />
       <div className="absolute right-0 bottom-0 h-[400px] w-[400px] rounded-full bg-violet-600/5 blur-[100px]" />

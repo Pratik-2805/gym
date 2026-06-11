@@ -748,110 +748,7 @@ export default function WhatsAppSetupPage() {
               </div>
             </div>
 
-            {/* Analytics Dashboard */}
-            {config.analytics && (
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 backdrop-blur-md space-y-4">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-cyan-400" />
-                  Message Delivery Stats
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                  <div className="border border-zinc-900 bg-zinc-950 p-4 rounded-xl text-center">
-                    <span className="text-zinc-500 text-[9px] font-bold uppercase tracking-wider block">Sent</span>
-                    <span className="text-xl font-black text-white mt-1 block">{config.analytics.sent}</span>
-                  </div>
-                  <div className="border border-zinc-900 bg-zinc-950 p-4 rounded-xl text-center">
-                    <span className="text-zinc-500 text-[9px] font-bold uppercase tracking-wider block">Delivered</span>
-                    <span className="text-xl font-black text-emerald-400 mt-1 block">{config.analytics.delivered}</span>
-                  </div>
-                  <div className="border border-zinc-900 bg-zinc-950 p-4 rounded-xl text-center">
-                    <span className="text-zinc-500 text-[9px] font-bold uppercase tracking-wider block">Read</span>
-                    <span className="text-xl font-black text-cyan-400 mt-1 block">{config.analytics.read}</span>
-                  </div>
-                  <div className="border border-zinc-900 bg-zinc-950 p-4 rounded-xl text-center">
-                    <span className="text-zinc-500 text-[9px] font-bold uppercase tracking-wider block">Failed</span>
-                    <span className="text-xl font-black text-rose-400 mt-1 block">{config.analytics.failed}</span>
-                  </div>
-                  <div className="border border-zinc-900 bg-zinc-950 p-4 rounded-xl text-center col-span-2 sm:col-span-1">
-                    <span className="text-zinc-500 text-[9px] font-bold uppercase tracking-wider block">Total Traffic</span>
-                    <span className="text-xl font-black text-white mt-1 block">{config.analytics.total}</span>
-                  </div>
-                </div>
-              </div>
-            )}
 
-
-            {/* Message Activity Log */}
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 backdrop-blur-md space-y-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Award className="w-4 h-4 text-cyan-400" />
-                Recent Message Logs
-              </h3>
-
-              <div className="overflow-x-auto">
-                {config.recentMessages && config.recentMessages.length > 0 ? (
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="border-b border-zinc-900 text-zinc-500 font-bold uppercase tracking-wider">
-                        <th className="py-2.5 px-3">Date</th>
-                        <th className="py-2.5 px-3">Sender/Recipient</th>
-                        <th className="py-2.5 px-3">Direction</th>
-                        <th className="py-2.5 px-3">Message</th>
-                        <th className="py-2.5 px-3">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-900/60">
-                      {config.recentMessages.map((m) => (
-                        <tr key={m.id} className="hover:bg-zinc-900/10 transition-all">
-                          <td className="py-3 px-3 text-zinc-400 font-mono">
-                            {new Date(m.createdAt).toLocaleDateString("en-IN", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </td>
-                          <td className="py-3 px-3 text-zinc-300 font-mono">
-                            {m.direction === "INBOUND" ? m.senderPhone : m.recipientPhone}
-                          </td>
-                          <td className="py-3 px-3">
-                            <span
-                              className={`rounded px-1.5 py-0.5 text-[10px] font-black uppercase ${
-                                m.direction === "INBOUND"
-                                  ? "bg-cyan-500/10 text-cyan-400"
-                                  : m.direction === "ECHO"
-                                  ? "bg-purple-500/10 text-purple-400"
-                                  : "bg-amber-500/10 text-amber-400"
-                              }`}
-                            >
-                              {m.direction}
-                            </span>
-                          </td>
-                          <td className="py-3 px-3 text-zinc-300 truncate max-w-[200px]" title={m.text}>
-                            {m.text}
-                          </td>
-                          <td className="py-3 px-3">
-                            <span
-                              className={`font-semibold ${
-                                m.status === "READ"
-                                  ? "text-cyan-400"
-                                  : m.status === "DELIVERED"
-                                  ? "text-emerald-400"
-                                  : m.status === "FAILED"
-                                  ? "text-rose-400"
-                                  : "text-zinc-400"
-                              }`}
-                            >
-                              {m.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="text-xs text-zinc-600 italic py-4">No recent messaging records.</p>
-                )}
-              </div>
-            </div>
           </motion.div>
         )}
 
@@ -1078,19 +975,7 @@ export default function WhatsAppSetupPage() {
                     />
                   </div>
 
-                  {/* Meta Business ID */}
-                  <div>
-                    <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider text-[10px]">
-                      Meta Business Portfolio ID (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 543210987654321"
-                      value={form.businessId}
-                      onChange={(e) => setForm({ ...form, businessId: e.target.value })}
-                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-xs text-white placeholder-zinc-700 focus:outline-none focus:border-cyan-500"
-                    />
-                  </div>
+
 
                   {/* Access Token */}
                   <div>
