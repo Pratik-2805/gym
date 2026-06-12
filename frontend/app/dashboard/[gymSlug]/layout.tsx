@@ -5,7 +5,6 @@ import { fetchBackend } from '@/lib/api-client';
 import ThemeToggle from '@/components/dashboard/ThemeToggle';
 import {
   Dumbbell,
-  LayoutDashboard,
   Users,
   CreditCard,
   CheckSquare,
@@ -42,7 +41,6 @@ export default async function DashboardLayout(props: DashboardLayoutProps) {
   }
 
   const sidebarLinks = [
-    { label: 'Analytics Home', icon: <LayoutDashboard className="h-4 w-4" />, href: `/dashboard/${params.gymSlug}` },
     { label: 'Members Directory', icon: <Users className="h-4 w-4" />, href: `/dashboard/${params.gymSlug}/members` },
     { label: 'Membership Plans', icon: <CreditCard className="h-4 w-4" />, href: `/dashboard/${params.gymSlug}/plans` },
     { label: 'Payments Portal', icon: <CheckSquare className="h-4 w-4" />, href: `/dashboard/${params.gymSlug}/payments` },
