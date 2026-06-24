@@ -307,14 +307,19 @@ function ChatArea({
         });
 
         if (!res.ok) {
-          throw new Error("Failed to send media");
+          let errMsg = "Failed to send media";
+          try {
+            const errData = await res.json();
+            errMsg = errData.error || errData.message || errMsg;
+          } catch (e) {}
+          throw new Error(errMsg);
         }
       }
       setImagePreview(null);
       toast.success("Media message sent successfully!");
     } catch (err) {
-      console.error("Media send failed", err);
-      toast.error("Failed to send media");
+      console.error("Media send failed:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to send media");
     } finally {
       setSendingPreview(false);
     }
@@ -458,7 +463,12 @@ function ChatArea({
               });
 
               if (!res.ok) {
-                throw new Error("Failed to send media");
+                let errMsg = "Failed to send media";
+                try {
+                  const errData = await res.json();
+                  errMsg = errData.error || errData.message || errMsg;
+                } catch (e) {}
+                throw new Error(errMsg);
               }
             }
             setMediaModal(null);
@@ -466,7 +476,7 @@ function ChatArea({
             genericInputRef.current && (genericInputRef.current.value = "");
           } catch (err) {
             console.error("Failed to send media:", err);
-            toast.error("Failed to send media");
+            toast.error(err instanceof Error ? err.message : "Failed to send media");
           }
         }}
         /* TEMPLATE */

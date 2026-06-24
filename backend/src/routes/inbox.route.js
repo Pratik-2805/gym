@@ -1093,6 +1093,19 @@ router.post("/:memberId/send-media", upload.single("file"), async (req, res) => 
     return res.status(400).json({ error: "File is required" });
   }
 
+  // Security check: Block executable/script files that could harm the platform or recipient
+  const harmfulExtensions = [
+    ".exe", ".msi", ".bat", ".cmd", ".sh", ".vbs", ".js", ".scr", ".pif", ".cpl", 
+    ".wsf", ".jar", ".com", ".gadget", ".vb", ".vbe", ".jse", ".lnk", ".reg"
+  ];
+  const ext = path.extname(file.originalname || "").toLowerCase();
+  if (harmfulExtensions.includes(ext)) {
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+    return res.status(400).json({ error: "File type not allowed for security reasons." });
+  }
+
   try {
     const gym = await prisma.gym.findUnique({
       where: { slug: gymSlug.toLowerCase() }
