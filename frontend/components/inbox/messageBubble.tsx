@@ -10,6 +10,7 @@ import {
   SquareArrowOutUpRight,
   Phone,
   Reply,
+  Loader2,
 } from "lucide-react";
 import type { Message, Conversation } from "@/lib/types";
 import { useState, useRef } from "react";
@@ -25,13 +26,30 @@ interface Props {
 }
 
 // Audio Player Component
-function AudioPlayer({ mediaUrl }: { mediaUrl: string }) {
+function AudioPlayer({
+  mediaUrl,
+  isDownloaded,
+  isDownloading,
+  onDownload,
+  mockSize,
+}: {
+  mediaUrl: string;
+  isDownloaded: boolean;
+  isDownloading: boolean;
+  onDownload: () => void;
+  mockSize: string;
+}) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const togglePlay = () => {
+    if (!isDownloaded) {
+      onDownload();
+      return;
+    }
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
@@ -53,7 +71,7 @@ function AudioPlayer({ mediaUrl }: { mediaUrl: string }) {
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!audioRef.current || !duration) return;
+    if (!isDownloaded || !audioRef.current || !duration) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -68,9 +86,29 @@ function AudioPlayer({ mediaUrl }: { mediaUrl: string }) {
     <div className="flex items-center gap-2 px-3 py-2 min-w-62.5">
       <button
         onClick={togglePlay}
-        className="shrink-0 w-10 h-10 rounded-full bg-cyan-600/10 hover:bg-cyan-600/20 flex items-center justify-center transition-colors"
+        disabled={isDownloading || (isDownloaded && isLoading && isPlaying)}
+        className="shrink-0 w-10 h-10 rounded-full bg-cyan-600/10 hover:bg-cyan-600/20 flex items-center justify-center transition-colors disabled:opacity-80"
       >
-        {isPlaying ? (
+        {!isDownloaded ? (
+          isDownloading ? (
+            <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+          ) : (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              className="text-cyan-400"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+          )
+        ) : isLoading && isPlaying ? (
+          <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+        ) : isPlaying ? (
           <svg
             width="16"
             height="16"
@@ -96,13 +134,13 @@ function AudioPlayer({ mediaUrl }: { mediaUrl: string }) {
 
       <div className="flex-1 flex items-center gap-2">
         <div
-          className="flex-1 h-8 flex items-center gap-0.5 cursor-pointer"
+          className={`flex-1 h-8 flex items-center gap-0.5 ${isDownloaded ? "cursor-pointer" : "cursor-default opacity-50"}`}
           onClick={handleSeek}
         >
           {[3, 5, 4, 6, 3, 7, 4, 5, 3, 6, 4, 5, 3, 4, 6, 3, 5, 4].map(
             (height, i) => {
               const barPercentage = ((i + 1) / 18) * 100;
-              const isFilled = barPercentage <= progressPercentage;
+              const isFilled = isDownloaded && barPercentage <= progressPercentage;
 
               return (
                 <div
@@ -110,7 +148,7 @@ function AudioPlayer({ mediaUrl }: { mediaUrl: string }) {
                   className={`flex-1 rounded-full transition-all ${
                     isFilled
                       ? "bg-cyan-600"
-                      : "bg-cyan-600/30 hover:bg-cyan-600/40"
+                      : "bg-cyan-600/30"
                   }`}
                   style={{ height: `${height * 3}px`, minWidth: "2px" }}
                 />
@@ -119,26 +157,62 @@ function AudioPlayer({ mediaUrl }: { mediaUrl: string }) {
           )}
         </div>
 
-        <audio
-          ref={audioRef}
-          src={mediaUrl}
-          onEnded={() => setIsPlaying(false)}
-          onLoadedMetadata={(e) => {
-            const audio = e.currentTarget;
-            setDuration(audio.duration);
-          }}
-          onTimeUpdate={(e) => {
-            const audio = e.currentTarget;
-            setCurrentTime(audio.currentTime);
-          }}
-        />
+        {isDownloaded && (
+          <audio
+            ref={audioRef}
+            src={mediaUrl}
+            onEnded={() => setIsPlaying(false)}
+            onLoadedMetadata={(e) => {
+              const audio = e.currentTarget;
+              setDuration(audio.duration);
+              setIsLoading(false);
+            }}
+            onCanPlay={() => setIsLoading(false)}
+            onWaiting={() => setIsLoading(true)}
+            onPlaying={() => setIsLoading(false)}
+            onError={() => setIsLoading(false)}
+            onTimeUpdate={(e) => {
+              const audio = e.currentTarget;
+              setCurrentTime(audio.currentTime);
+            }}
+            autoPlay={isPlaying}
+          />
+        )}
       </div>
 
-      <span className="text-xs text-zinc-400 shrink-0">
-        {formatTime(remainingTime)}
+      <span className="text-xs text-zinc-400 shrink-0 select-none">
+        {isDownloaded ? formatTime(remainingTime) : mockSize}
       </span>
     </div>
   );
+}
+
+
+
+function getStableMockSize(messageId: string, type: string) {
+  let hash = 0;
+  for (let i = 0; i < messageId.length; i++) {
+    hash = messageId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  hash = Math.abs(hash);
+  
+  if (type === "image") {
+    const sizeKb = 100 + (hash % 1400);
+    return sizeKb > 1024 
+      ? `${(sizeKb / 1024).toFixed(1)} MB` 
+      : `${sizeKb} KB`;
+  } else if (type === "video") {
+    const sizeMb = 1.0 + (hash % 70) / 10;
+    return `${sizeMb.toFixed(1)} MB`;
+  } else if (type === "audio") {
+    const sizeKb = 50 + (hash % 450);
+    return `${sizeKb} KB`;
+  } else {
+    const sizeKb = 100 + (hash % 14900);
+    return sizeKb > 1024 
+      ? `${(sizeKb / 1024).toFixed(1)} MB` 
+      : `${sizeKb} KB`;
+  }
 }
 
 export default function MessageBubble({
@@ -148,6 +222,21 @@ export default function MessageBubble({
   onOpenMenu,
   onReply,
 }: Props) {
+  const [imageError, setImageError] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  
+  const storageKey = `downloaded_${msg.whatsappMessageId || msg.id}`;
+  const [isDownloaded, setIsDownloaded] = useState(() => {
+    if (msg.sender === "executive") return true;
+    if (typeof window !== "undefined") {
+      return !!localStorage.getItem(storageKey);
+    }
+    return false;
+  });
+  const [isDownloadingMedia, setIsDownloadingMedia] = useState(false);
+
+
+
   const repliedMessage: Message | undefined =
     allMessages.find((m) => m.whatsappMessageId === msg.replyToMessageId) ??
     (msg.replyTo
@@ -204,6 +293,34 @@ export default function MessageBubble({
       effectiveMimeType?.includes("document")) &&
     msg.template?.header?.type !== "DOCUMENT"
   );
+
+  const handleDownloadMedia = async () => {
+    if (isDownloadingMedia) return;
+    setIsDownloadingMedia(true);
+    try {
+      const response = await fetch(effectiveMediaUrl!);
+      if (!response.ok) throw new Error("Failed to fetch media");
+      
+      localStorage.setItem(storageKey, "true");
+      setIsDownloaded(true);
+    } catch (err) {
+      console.error("Failed to load media:", err);
+      localStorage.setItem(storageKey, "true");
+      setIsDownloaded(true);
+    } finally {
+      setIsDownloadingMedia(false);
+    }
+  };
+
+  const handleDocumentAction = () => {
+    if (!isDownloaded) {
+      handleDownloadMedia();
+    } else {
+      window.open(effectiveMediaUrl!, "_blank");
+    }
+  };
+
+
 
   const formattedTime = msg.timestamp
     ? new Date(msg.timestamp).toLocaleTimeString([], {
@@ -363,21 +480,59 @@ export default function MessageBubble({
           >
             {/* IMAGE MESSAGE */}
             {isImage && effectiveMediaUrl && (
-              <div className="w-fit max-w-75">
-                <div className="p-1">
-                  <img
-                    src={effectiveMediaUrl}
-                    alt="Image"
-                    className={`w-full h-auto object-cover cursor-pointer ${cleanText ? "rounded-t-md" : "rounded-md"}`}
-                    onClick={() => window.open(effectiveMediaUrl!, "_blank")}
-                  />
-                </div>
+              <div className="w-fit max-w-75 relative">
+                {!isDownloaded ? (
+                  <div className="p-1 relative w-64 h-48 flex flex-col items-center justify-center bg-zinc-800 dark:bg-zinc-900 rounded-md overflow-hidden border border-zinc-700/50">
+                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-700/20 to-zinc-900/40 backdrop-blur-md opacity-70" />
+                    <button
+                      onClick={handleDownloadMedia}
+                      disabled={isDownloadingMedia}
+                      className="z-10 flex flex-col items-center gap-2 group cursor-pointer"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-black/50 hover:bg-black/70 border border-white/25 flex items-center justify-center shadow-lg transition-all active:scale-95">
+                        {isDownloadingMedia ? (
+                          <Loader2 className="w-5 h-5 text-white animate-spin" />
+                        ) : (
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            className="text-white transform group-hover:translate-y-0.5 transition-transform"
+                          >
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <polyline points="19 12 12 19 5 12"></polyline>
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-medium text-white/90 bg-black/30 px-2 py-0.5 rounded-full backdrop-blur-[2px] select-none">
+                        {isDownloadingMedia ? "Loading..." : getStableMockSize(msg.whatsappMessageId || msg.id, "image")}
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-1 relative min-w-[200px] min-h-[150px] flex items-center justify-center bg-black/5 dark:bg-black/25 rounded-md overflow-hidden">
+                    {imageError && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-rose-950/10 text-rose-400 gap-1.5 p-3 text-center z-10">
+                        <AlertCircle className="w-5 h-5" />
+                        <span className="text-[10px] font-semibold">Failed to load image</span>
+                      </div>
+                    )}
+                    <img
+                      src={effectiveMediaUrl}
+                      alt="Image"
+                      className={`w-full h-auto object-cover cursor-pointer rounded-md`}
+                      onError={() => setImageError(true)}
+                      onClick={() => window.open(effectiveMediaUrl!, "_blank")}
+                    />
+                  </div>
+                )}
 
                 {cleanText && (
-                  <div className="relative px-2 pb-2">
-                    <p
-                      className="text-[13px] break-words whitespace-pre-wrap leading-[18px] pr-14"
-                    >
+                  <div className="relative px-2 pb-2 mt-1">
+                    <p className="text-[13px] break-words whitespace-pre-wrap leading-[18px] pr-14">
                       {cleanText}
                     </p>
                     {!msg.template?.footer && (
@@ -388,7 +543,7 @@ export default function MessageBubble({
                   </div>
                 )}
 
-                {!cleanText && (
+                {!cleanText && isDownloaded && (
                   <div className="absolute bottom-2 right-2">
                     {renderTimestamp({ isOverlay: true })}
                   </div>
@@ -398,20 +553,72 @@ export default function MessageBubble({
 
             {/* VIDEO MESSAGE */}
             {isVideo && effectiveMediaUrl && (
-              <div className="w-fit max-w-75">
-                <div className="p-1">
-                  <video
-                    src={effectiveMediaUrl}
-                    controls
-                    className={`w-full h-auto object-cover ${cleanText ? "rounded-t-md" : "rounded-md"}`}
-                  />
-                </div>
+              <div className="w-fit max-w-75 relative">
+                {!isDownloaded ? (
+                  <div className="p-1 relative w-64 h-48 flex flex-col items-center justify-center bg-zinc-800 dark:bg-zinc-900 rounded-md overflow-hidden border border-zinc-700/50">
+                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-700/20 to-zinc-900/40 backdrop-blur-md opacity-70" />
+                    <div className="absolute top-2.5 left-2.5 z-10 p-1 bg-black/40 rounded backdrop-blur-[2px]">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="text-white"
+                      >
+                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                      </svg>
+                    </div>
+                    <button
+                      onClick={handleDownloadMedia}
+                      disabled={isDownloadingMedia}
+                      className="z-10 flex flex-col items-center gap-2 group cursor-pointer"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-black/50 hover:bg-black/70 border border-white/25 flex items-center justify-center shadow-lg transition-all active:scale-95">
+                        {isDownloadingMedia ? (
+                          <Loader2 className="w-5 h-5 text-white animate-spin" />
+                        ) : (
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            className="text-white transform group-hover:translate-y-0.5 transition-transform"
+                          >
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <polyline points="19 12 12 19 5 12"></polyline>
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-medium text-white/90 bg-black/30 px-2 py-0.5 rounded-full backdrop-blur-[2px] select-none">
+                        {isDownloadingMedia ? "Loading..." : getStableMockSize(msg.whatsappMessageId || msg.id, "video")}
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-1 relative min-w-[200px] min-h-[150px] flex items-center justify-center bg-black/5 dark:bg-black/25 rounded-md overflow-hidden">
+                    {videoError && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-rose-950/10 text-rose-400 gap-1.5 p-3 text-center z-10">
+                        <AlertCircle className="w-5 h-5" />
+                        <span className="text-[10px] font-semibold">Failed to load video</span>
+                      </div>
+                    )}
+                    <video
+                      src={effectiveMediaUrl}
+                      controls
+                      className="w-full h-auto object-cover rounded-md"
+                      onError={() => setVideoError(true)}
+                    />
+                  </div>
+                )}
 
                 {cleanText && (
-                  <div className="relative px-2 pb-2">
-                    <p
-                      className="text-[13px] break-words whitespace-pre-wrap leading-[18px] pr-14"
-                    >
+                  <div className="relative px-2 pb-2 mt-1">
+                    <p className="text-[13px] break-words whitespace-pre-wrap leading-[18px] pr-14">
                       {cleanText}
                     </p>
                     {!msg.template?.footer && (
@@ -422,7 +629,7 @@ export default function MessageBubble({
                   </div>
                 )}
 
-                {!cleanText && (
+                {!cleanText && isDownloaded && (
                   <div className="absolute bottom-8 right-2">
                     {renderTimestamp({ isOverlay: true })}
                   </div>
@@ -432,7 +639,13 @@ export default function MessageBubble({
 
             {isAudio && effectiveMediaUrl && (
               <div className="relative p-1">
-                <AudioPlayer mediaUrl={effectiveMediaUrl} />
+                <AudioPlayer 
+                  mediaUrl={effectiveMediaUrl} 
+                  isDownloaded={isDownloaded}
+                  isDownloading={isDownloadingMedia}
+                  onDownload={handleDownloadMedia}
+                  mockSize={getStableMockSize(msg.whatsappMessageId || msg.id, "audio")}
+                />
                 {!cleanText &&
                   renderTimestamp({ customClass: "absolute bottom-1 right-2" })}
               </div>
@@ -458,29 +671,48 @@ export default function MessageBubble({
                   <p className="text-sm font-medium truncate">
                     {effectiveCaption || "Document"}
                   </p>
-                  <p className="text-xs opacity-70">
-                    {effectiveMimeType?.split("/")[1]?.toUpperCase() || "FILE"} • Tap to view
+                  <p className="text-xs opacity-70 select-none">
+                    {effectiveMimeType?.split("/")[1]?.toUpperCase() || "FILE"} • {
+                      !isDownloaded 
+                        ? (isDownloadingMedia ? "Loading..." : getStableMockSize(msg.whatsappMessageId || msg.id, "document"))
+                        : "Loaded in App"
+                    }
                   </p>
                 </div>
-                <a
-                  href={effectiveMediaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 w-10 h-10 rounded-full bg-cyan-600/10 hover:bg-cyan-600/20 flex items-center justify-center transition-colors text-cyan-400"
+                <button
+                  onClick={handleDocumentAction}
+                  disabled={isDownloadingMedia}
+                  className="shrink-0 w-10 h-10 rounded-full bg-cyan-600/10 hover:bg-cyan-600/20 flex items-center justify-center transition-colors text-cyan-400 disabled:opacity-80"
                 >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                </a>
+                  {isDownloadingMedia ? (
+                    <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+                  ) : !isDownloaded ? (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <polyline points="19 12 12 19 5 12"></polyline>
+                    </svg>
+                  ) : (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                  )}
+                </button>
                 {!cleanText &&
                   renderTimestamp({ customClass: "absolute bottom-1 right-2" })}
               </div>
