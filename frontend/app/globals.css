@@ -141,9 +141,9 @@ body {
   --accent-soft: rgba(59, 130, 246, 0.12);
 
   --wa-chat-bg: #e8f1fb;
-  --bubble-outbound-bg: #0f766e;
-  --bubble-outbound-text: #f8fafc;
-  --bubble-outbound-meta: #6b7280;
+  --bubble-outbound-bg: #99db8d;
+  --bubble-outbound-text: #111b21;
+  --bubble-outbound-meta: #667781;
   --bubble-inbound-bg: #ffffff;
   --bubble-inbound-text: #0f172a;
   --bubble-inbound-meta: #64748b;

@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/api/:path*`,
       },
       {
+        source: "/uploads/:path*",
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/uploads/:path*`,
+      },
+      {
         source: "/webhook",
         destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}/webhook`,
       },

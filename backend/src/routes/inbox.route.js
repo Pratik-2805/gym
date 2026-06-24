@@ -1008,6 +1008,65 @@ router.post("/:memberId/send-template", async (req, res) => {
 
     const components = [];
 
+    // 🔹 Build Header parameters if template has media header
+    const componentsRaw = Array.isArray(template.components) ? template.components : [];
+    const headerComp = componentsRaw.find((c) => c.type === "HEADER");
+
+    if (headerComp && ["IMAGE", "VIDEO", "DOCUMENT"].includes(headerComp.format)) {
+      const fileInfo = headerComp.example;
+      if (fileInfo && fileInfo.local_filename) {
+        const templatesUploadDir = "uploads/templates";
+        const filePath = path.join(templatesUploadDir, fileInfo.local_filename);
+        if (fs.existsSync(filePath)) {
+          console.log(`🔌 [Send Template] Uploading header media "${fileInfo.local_filename}" to Meta...`);
+          const fileBuffer = fs.readFileSync(filePath);
+          const blob = new Blob([fileBuffer], { type: fileInfo.local_mimetype || "image/jpeg" });
+
+          const waForm = new FormData();
+          waForm.append("messaging_product", "whatsapp");
+          waForm.append("file", blob, fileInfo.local_originalname || "header-file");
+
+          const uploadRes = await fetch(
+            `${GRAPH_BASE_URL}/${META_API_VERSION}/${gym.whatsapp_phone_number_id}/media`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`
+              },
+              body: waForm
+            }
+          );
+
+          if (!uploadRes.ok) {
+            const errData = await uploadRes.json();
+            console.error("❌ Failed to upload template header media to Meta:", errData);
+            return res.status(400).json({
+              error: errData?.error?.message || "Failed to upload template header media to Meta"
+            });
+          }
+
+          const uploadData = await uploadRes.json();
+          const mediaId = uploadData.id;
+
+          if (mediaId) {
+            const formatLower = headerComp.format.toLowerCase();
+            components.push({
+              type: "header",
+              parameters: [
+                {
+                  type: formatLower,
+                  [formatLower]: {
+                    id: mediaId
+                  }
+                }
+              ]
+            });
+            console.log(`✅ [Send Template] Header media uploaded. ID: ${mediaId}`);
+          }
+        }
+      }
+    }
+
     // 🔹 Build Body parameters
     if (bodyVariables && bodyVariables.length > 0) {
       components.push({
@@ -1053,7 +1112,6 @@ router.post("/:memberId/send-template", async (req, res) => {
     const messageId = resData.messages?.[0]?.id || `temp-${Date.now()}`;
 
     // Reconstruct message body text for database/inbox log
-    const componentsRaw = Array.isArray(template.components) ? template.components : [];
     const bodyComp = componentsRaw.find((c) => c.type === "BODY");
     let content = bodyComp ? bodyComp.text : "";
     if (bodyVariables && bodyVariables.length > 0) {

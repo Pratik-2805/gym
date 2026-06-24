@@ -187,9 +187,22 @@ export default function MessageTemplatesPage() {
   const [formHeaderType, setFormHeaderType] = useState<'NONE' | 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'>('NONE');
   const [formHeaderText, setFormHeaderText] = useState('');
   const [formHeaderFile, setFormHeaderFile] = useState<File | null>(null);
+  const [formHeaderPreviewUrl, setFormHeaderPreviewUrl] = useState<string | null>(null);
   const [formBody, setFormBody] = useState('');
   const [formFooter, setFormFooter] = useState('');
   const [formButtons, setFormButtons] = useState<FormButton[]>([]);
+
+  useEffect(() => {
+    if (!formHeaderFile) {
+      setFormHeaderPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(formHeaderFile);
+    setFormHeaderPreviewUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [formHeaderFile]);
 
   // ----------------------------------------------------
   // FETCH INTEGRATION STATUS & TEMPLATES
@@ -927,7 +940,7 @@ export default function MessageTemplatesPage() {
                     </div>
 
                     {/* Smartphone Frame Mockup Wrapper */}
-                    <div className="relative mx-auto w-[290px] h-[520px] rounded-[38px] border-[10px] border-zinc-800 bg-[#0b141a] shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-1 ring-zinc-700/50">
+                    <div className="relative mx-auto w-[290px] h-[520px] rounded-[38px] border-[10px] border-zinc-800 bg-wa-chat-bg shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-1 ring-zinc-700/50">
                       {/* Speaker Notch / Dynamic Island */}
                       <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-4.5 bg-zinc-850 rounded-full z-30 flex items-center justify-center border border-zinc-800/40">
                         <div className="w-1.5 h-1.5 bg-zinc-900 rounded-full ml-1.5" />
@@ -940,15 +953,15 @@ export default function MessageTemplatesPage() {
                       {/* Screen Content Wrapper */}
                       <div className="flex-1 flex flex-col justify-between overflow-hidden relative pt-7 pb-4">
                         {/* WhatsApp Header Mockup */}
-                        <div className="bg-[#202c33] px-3.5 py-2.5 flex items-center justify-between border-b border-[#2d3a42] shrink-0">
+                        <div className="bg-zinc-900 px-3.5 py-2.5 flex items-center justify-between border-b border-zinc-800 shrink-0">
                           <div className="flex items-center gap-2">
                             <span className="text-zinc-400 text-xs cursor-pointer select-none">←</span>
                             <div className="w-6.5 h-6.5 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-[10px]">
                               <FileText className="w-3.5 h-3.5 text-white" />
                             </div>
                             <div>
-                              <span className="block text-[10px] font-bold text-[#e9edef] leading-tight">Gym Member</span>
-                              <span className="block text-[8px] text-[#00a884] leading-tight font-semibold">online</span>
+                              <span className="block text-[10px] font-bold text-zinc-100 leading-tight">Gym Member</span>
+                              <span className="block text-[8px] text-emerald-400 leading-tight font-semibold">online</span>
                             </div>
                           </div>
                           <div className="flex gap-2 text-zinc-400 text-[9px] select-none">
@@ -958,23 +971,44 @@ export default function MessageTemplatesPage() {
                         </div>
 
                         {/* Chat Area Mockup */}
-                        <div className="flex-1 p-3.5 space-y-3 relative bg-[#0b141a] overflow-y-auto flex flex-col justify-end">
+                        <div className="flex-1 p-3.5 space-y-3 relative bg-wa-chat-bg overflow-y-auto flex flex-col justify-end">
                           {/* Background WhatsApp Doodle grid effect */}
                           <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
 
                           {/* Chat Message Bubble (Outgoing) */}
-                          <div className="relative self-end bg-[#005c4b] text-[#e9edef] p-2.5 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-[#005c4b] z-10 flex flex-col text-[10px] leading-relaxed">
+                          <div className="relative self-end bg-bubble-outbound-bg text-bubble-outbound-text p-2.5 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-bubble-outbound-bg z-10 flex flex-col text-[10px] leading-relaxed">
                             {/* Header element */}
                             {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'TEXT' && (
-                              <div className="font-bold text-white text-[10px] border-b border-[#00705a] pb-1 mb-1.5">
+                              <div className="font-bold text-bubble-outbound-text text-[10px] border-b border-bubble-outbound-meta/20 pb-1 mb-1.5">
                                 {getComponentOf(selectedTemplate.components, 'HEADER')?.text}
                               </div>
                             )}
-                            {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(getComponentOf(selectedTemplate.components, 'HEADER')?.format || '') && (
-                              <div className="rounded-lg bg-black/20 border border-[#004f40] p-3 text-center text-[9px] text-zinc-300 flex flex-col items-center justify-center gap-1 mb-1">
+                            {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'IMAGE' && 
+                             getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename ? (
+                              <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative">
+                                <img
+                                  src={`/uploads/templates/${getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename}`}
+                                  alt="Header Image Preview"
+                                  className="w-full h-auto max-h-[140px] object-cover"
+                                />
+                                <div className="absolute bottom-1 right-1 bg-black/50 px-1 py-0.5 rounded text-[6px] text-white">
+                                  IMAGE
+                                </div>
+                              </div>
+                            ) : getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'VIDEO' && 
+                             getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename ? (
+                              <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative font-sans">
+                                <video
+                                  src={`/uploads/templates/${getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename}`}
+                                  className="w-full h-auto max-h-[140px] object-cover"
+                                  controls
+                                />
+                              </div>
+                            ) : ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(getComponentOf(selectedTemplate.components, 'HEADER')?.format || '') && (
+                              <div className="rounded-lg bg-black/10 border border-bubble-outbound-meta/10 p-3 text-center text-[9px] text-bubble-outbound-text flex flex-col items-center justify-center gap-1 mb-1">
                                 <Upload className="h-3.5 w-3.5 text-cyan-400" />
                                 <span className="font-bold">{getComponentOf(selectedTemplate.components, 'HEADER')?.format}</span>
-                                <span className="text-[7px] text-[#8696a0] truncate max-w-[120px]">
+                                <span className="text-[7px] text-bubble-outbound-meta truncate max-w-[120px]">
                                   {getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_originalname || 'draft-file'}
                                 </span>
                               </div>
@@ -987,13 +1021,13 @@ export default function MessageTemplatesPage() {
 
                             {/* Footer element */}
                             {getComponentOf(selectedTemplate.components, 'FOOTER') && (
-                              <div className="text-[8px] text-[#e9edef]/60 mt-1 block">
+                              <div className="text-[8px] text-bubble-outbound-meta mt-1 block">
                                 {getComponentOf(selectedTemplate.components, 'FOOTER')?.text}
                               </div>
                             )}
 
                             {/* Timestamp & checkmarks */}
-                            <div className="self-end flex items-center gap-1 mt-1 text-[7px] text-[#e9edef]/60 leading-none">
+                            <div className="self-end flex items-center gap-1 mt-1 text-[7px] text-bubble-outbound-meta leading-none">
                               <span>12:34 PM</span>
                               <span className="text-[#53bdeb]">✓✓</span>
                             </div>
@@ -1005,7 +1039,7 @@ export default function MessageTemplatesPage() {
                               {getComponentOf(selectedTemplate.components, 'BUTTONS')?.buttons?.map((btn: any, idx: number) => (
                                 <div
                                   key={idx}
-                                  className="w-full bg-[#202c33] hover:bg-[#2a3942] border border-[#2d3a42] rounded-lg py-1.5 px-3 text-[10px] text-[#53bdeb] font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm"
+                                  className="w-full bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-lg py-1.5 px-3 text-[10px] text-cyan-400 font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm"
                                 >
                                   {btn.type === 'URL' && <ExternalLink className="h-3 w-3" />}
                                   {btn.text}
@@ -1379,7 +1413,7 @@ export default function MessageTemplatesPage() {
                     </div>
 
                     {/* Smartphone Frame Mockup Wrapper */}
-                    <div className="relative mx-auto w-[270px] h-[480px] rounded-[38px] border-[10px] border-zinc-800 bg-[#0b141a] shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-1 ring-zinc-700/50">
+                    <div className="relative mx-auto w-[270px] h-[480px] rounded-[38px] border-[10px] border-zinc-800 bg-wa-chat-bg shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-1 ring-zinc-700/50">
                       {/* Speaker Notch / Dynamic Island */}
                       <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-4.5 bg-zinc-850 rounded-full z-30 flex items-center justify-center border border-zinc-800/40">
                         <div className="w-1.5 h-1.5 bg-zinc-900 rounded-full ml-1.5" />
@@ -1392,15 +1426,15 @@ export default function MessageTemplatesPage() {
                       {/* Screen Content Wrapper */}
                       <div className="flex-1 flex flex-col justify-between overflow-hidden relative pt-7 pb-4">
                         {/* WhatsApp Header Mockup */}
-                        <div className="bg-[#202c33] px-3.5 py-2.5 flex items-center justify-between border-b border-[#2d3a42] shrink-0">
+                        <div className="bg-zinc-900 px-3.5 py-2.5 flex items-center justify-between border-b border-zinc-800 shrink-0">
                           <div className="flex items-center gap-2">
                             <span className="text-zinc-400 text-xs cursor-pointer select-none">←</span>
                             <div className="w-6.5 h-6.5 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-[10px]">
                               <FileText className="w-3.5 h-3.5 text-white" />
                             </div>
                             <div>
-                              <span className="block text-[10px] font-bold text-[#e9edef] leading-tight">Gym Member</span>
-                              <span className="block text-[8px] text-[#00a884] leading-tight font-semibold">online</span>
+                              <span className="block text-[10px] font-bold text-zinc-100 leading-tight">Gym Member</span>
+                              <span className="block text-[8px] text-emerald-400 leading-tight font-semibold">online</span>
                             </div>
                           </div>
                           <div className="flex gap-2 text-zinc-400 text-[9px] select-none">
@@ -1410,23 +1444,42 @@ export default function MessageTemplatesPage() {
                         </div>
 
                         {/* Chat Area Mockup */}
-                        <div className="flex-1 p-3.5 space-y-3 relative bg-[#0b141a] overflow-y-auto flex flex-col justify-end font-sans">
+                        <div className="flex-1 p-3.5 space-y-3 relative bg-wa-chat-bg overflow-y-auto flex flex-col justify-end font-sans">
                           {/* Background WhatsApp Doodle grid effect */}
                           <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
 
                           {/* Chat Message Bubble (Outgoing) */}
-                          <div className="relative self-end bg-[#005c4b] text-[#e9edef] p-2.5 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-[#005c4b] z-10 flex flex-col text-[10px] leading-relaxed">
+                          <div className="relative self-end bg-bubble-outbound-bg text-bubble-outbound-text p-2.5 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-bubble-outbound-bg z-10 flex flex-col text-[10px] leading-relaxed">
                             {/* Header element */}
                             {formHeaderType === 'TEXT' && formHeaderText && (
-                              <div className="font-bold text-white text-[10px] border-b border-[#00705a] pb-1 mb-1.5">
+                              <div className="font-bold text-bubble-outbound-text text-[10px] border-b border-bubble-outbound-meta/20 pb-1 mb-1.5">
                                 {formHeaderText}
                               </div>
                             )}
-                            {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(formHeaderType) && (
-                              <div className="rounded-lg bg-black/20 border border-[#004f40] p-3 text-center text-[9px] text-zinc-300 flex flex-col items-center justify-center gap-1 mb-1">
+                            {formHeaderType === 'IMAGE' && formHeaderPreviewUrl ? (
+                              <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative">
+                                <img
+                                  src={formHeaderPreviewUrl}
+                                  alt="Header Image Preview"
+                                  className="w-full h-auto max-h-[140px] object-cover"
+                                />
+                                <div className="absolute bottom-1 right-1 bg-black/50 px-1 py-0.5 rounded text-[6px] text-white">
+                                  IMAGE
+                                </div>
+                              </div>
+                            ) : formHeaderType === 'VIDEO' && formHeaderPreviewUrl ? (
+                              <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative font-sans">
+                                <video
+                                  src={formHeaderPreviewUrl}
+                                  className="w-full h-auto max-h-[140px] object-cover"
+                                  controls
+                                />
+                              </div>
+                            ) : ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(formHeaderType) && (
+                              <div className="rounded-lg bg-black/10 border border-bubble-outbound-meta/10 p-3 text-center text-[9px] text-bubble-outbound-text flex flex-col items-center justify-center gap-1 mb-1">
                                 <Upload className="h-3.5 w-3.5 text-cyan-400" />
                                 <span className="font-bold">{formHeaderType}</span>
-                                <span className="text-[7px] text-[#8696a0] truncate max-w-[120px]">
+                                <span className="text-[7px] text-bubble-outbound-meta truncate max-w-[120px]">
                                   {formHeaderFile ? formHeaderFile.name : `Select ${formHeaderType.toLowerCase()} file`}
                                 </span>
                               </div>
@@ -1439,13 +1492,13 @@ export default function MessageTemplatesPage() {
 
                             {/* Footer element */}
                             {formFooter && (
-                              <div className="text-[8px] text-[#e9edef]/60 mt-1 block">
+                              <div className="text-[8px] text-bubble-outbound-meta mt-1 block">
                                 {formFooter}
                               </div>
                             )}
 
                             {/* Timestamp & checkmarks */}
-                            <div className="self-end flex items-center gap-1 mt-1 text-[7px] text-[#e9edef]/60 leading-none">
+                            <div className="self-end flex items-center gap-1 mt-1 text-[7px] text-bubble-outbound-meta leading-none">
                               <span>12:34 PM</span>
                               <span className="text-[#53bdeb]">✓✓</span>
                             </div>
@@ -1457,7 +1510,7 @@ export default function MessageTemplatesPage() {
                               {formButtons.map((btn) => (
                                 <div
                                   key={btn.id}
-                                  className="w-full bg-[#202c33] hover:bg-[#2a3942] border border-[#2d3a42] rounded-lg py-1.5 px-3 text-[10px] text-[#53bdeb] font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm font-sans"
+                                  className="w-full bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-lg py-1.5 px-3 text-[10px] text-cyan-400 font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm font-sans"
                                 >
                                   {btn.type === 'URL' && <ExternalLink className="h-3 w-3" />}
                                   {btn.text || 'Button Label'}
@@ -1535,28 +1588,28 @@ function renderComponentSummary(componentsJson: any): React.ReactNode {
   const buttons = list.find((c: any) => c.type === 'BUTTONS');
 
   return (
-    <div className="bg-[#0b141a] rounded-xl p-3.5 border border-[#202c33]/50 relative overflow-hidden font-sans select-none h-[170px] max-h-[170px] flex flex-col justify-between">
+    <div className="bg-wa-chat-bg rounded-xl p-3.5 border border-zinc-800 relative overflow-hidden font-sans select-none h-[170px] max-h-[170px] flex flex-col justify-between transition-all duration-300">
       {/* Outer wrapper representing the chat view */}
       <div className="flex flex-col items-start w-full overflow-hidden">
         {/* Message bubble */}
-        <div className="w-[90%] max-w-[90%] bg-[#202c33] rounded-2xl rounded-tl-none p-3 shadow-md space-y-1 relative text-[11px] leading-relaxed">
+        <div className="w-[90%] max-w-[90%] bg-bubble-outbound-bg rounded-2xl rounded-tl-none p-3 shadow-md space-y-1 relative text-[11px] leading-relaxed transition-all duration-300">
           {/* WhatsApp Chat Bubble Tail */}
-          <div className="absolute top-0 -left-1.5 w-0 h-0 border-t-[8px] border-t-[#202c33] border-l-[8px] border-l-transparent" />
+          <div className="absolute top-0 -left-1.5 w-0 h-0 border-t-[8px] border-t-bubble-outbound-bg border-l-[8px] border-l-transparent transition-all duration-300" />
           
           {header && (
-            <div className="font-extrabold text-[10px] text-[#00a884] uppercase tracking-wide border-b border-[#2a3942]/60 pb-1 mb-1 font-sans truncate">
+            <div className="font-extrabold text-[10px] text-bubble-outbound-meta uppercase tracking-wide border-b border-zinc-800/10 pb-1 mb-1 font-sans truncate">
               {header.format === 'TEXT' ? header.text : `📎 ${header.format} Header`}
             </div>
           )}
           
           {body && (
-            <p className="text-[#e9edef] whitespace-pre-wrap font-normal font-sans line-clamp-3">
+            <p className="text-bubble-outbound-text whitespace-pre-wrap font-normal font-sans line-clamp-3">
               {body.text}
             </p>
           )}
           
           {footer && (
-            <div className="text-[9px] text-[#8696a0] mt-0.5 font-medium font-sans truncate">
+            <div className="text-[9px] text-bubble-outbound-meta mt-0.5 font-medium font-sans truncate">
               {footer.text}
             </div>
           )}
@@ -1568,7 +1621,7 @@ function renderComponentSummary(componentsJson: any): React.ReactNode {
             {buttons.buttons.slice(0, 2).map((b: any, idx: number) => (
               <div
                 key={idx}
-                className="w-full bg-[#202c33]/90 border border-[#2a3942] rounded-lg py-1 px-3 text-[10px] text-[#00a884] font-bold text-center flex items-center justify-center gap-1 shadow-sm truncate"
+                className="w-full bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-lg py-1 px-3 text-[10px] text-cyan-400 font-bold text-center flex items-center justify-center gap-1 shadow-sm truncate transition-all duration-300"
               >
                 {b.text}
               </div>

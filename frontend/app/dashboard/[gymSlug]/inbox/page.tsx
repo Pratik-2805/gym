@@ -252,9 +252,9 @@ function ChatArea({
       setSelectedTemplate(null);
       setTemplateVariables([]);
       toast.success("Template sent successfully!");
-    } catch (err) {
-      console.error("Failed to send template", err);
-      toast.error("Failed to send template");
+    } catch (err: any) {
+      console.warn("Failed to send template:", err);
+      toast.error(err.message || "Failed to send template");
     } finally {
       setIsSendingTemplate(false);
     }
