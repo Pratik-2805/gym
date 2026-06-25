@@ -74,35 +74,44 @@ body {
   --foreground: #0f172a;
 }
 
-/* Light Theme (Fully inverted light layout) */
+/* Light Theme — Soft cream/white background with deep dark text for maximum readability */
 [data-theme="light"] {
-  --color-zinc-950: #ffffff;
-  --color-zinc-900: #f4f4f5;
-  --color-zinc-850: #e4e4e7;
-  --color-zinc-800: #d4d4d8;
-  --color-zinc-700: #a1a1aa;
-  --color-zinc-600: #71717a;
-  --color-zinc-500: #52525b;
-  --color-zinc-400: #3f3f46;
-  --color-zinc-300: #27272a;
-  --color-zinc-200: #18181b;
-  --color-zinc-100: #09090b;
-  --color-white: #09090b;    /* Invert white text to black */
-  --color-black: #ffffff;    /* Invert black text/bg to white */
+  --color-zinc-950: #f8fafc;   /* Main page bg - near white */
+  --color-zinc-900: #f1f5f9;   /* Panel bg - soft off-white */
+  --color-zinc-850: #e2e8f0;   /* Card bg */
+  --color-zinc-800: #cbd5e1;   /* Borders - visible light gray */
+  --color-zinc-700: #94a3b8;   /* Muted elements */
+  --color-zinc-600: #64748b;   /* Secondary text */
+  --color-zinc-500: #475569;   /* Body text - readable */
+  --color-zinc-400: #334155;   /* Accent text */
+  --color-zinc-300: #1e293b;   /* Headings - dark */
+  --color-zinc-200: #0f172a;   /* Primary text - very dark */
+  --color-zinc-100: #030712;   /* Darkest text - near black */
+  --color-white: #0f172a;      /* Invert: white text → dark text on light bg */
+  --color-black: #f8fafc;      /* Invert: black bg → white bg */
 
-  --background: #ffffff;
-  --foreground: #09090b;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
-/* Page global background transitions */
-html, body {
-  background-color: var(--color-zinc-950) !important;
-  color: var(--color-zinc-100) !important;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+/* Page global background transitions — only apply bg on themed dashboard pages */
+[data-theme] body {
+  background-color: var(--color-zinc-950);
+  color: var(--color-zinc-100);
 }
 
 /* Smooth transition for sidebars, main contents, and cards */
-aside, header, main, table, tr, td, th, div, button, input, textarea, select {
+[data-theme] aside,
+[data-theme] header,
+[data-theme] main,
+[data-theme] table,
+[data-theme] tr,
+[data-theme] td,
+[data-theme] th {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+div, button, input, textarea, select {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
@@ -170,6 +179,151 @@ aside, header, main, table, tr, td, th, div, button, input, textarea, select {
 [data-theme="coloured"] input:focus,
 [data-theme="coloured"] textarea:focus {
   border-color: #7AAACE !important;
+}
+
+/* =====================================================
+   LIGHT THEME — Dashboard Overrides
+   ===================================================== */
+
+/* Sidebar & Header background in light mode */
+[data-theme="light"] aside {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] header {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* All sidebar text readable */
+[data-theme="light"] aside *,
+[data-theme="light"] aside a,
+[data-theme="light"] aside span,
+[data-theme="light"] aside nav a {
+  color: #334155 !important;
+}
+
+[data-theme="light"] aside nav a:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Header breadcrumb & title text */
+[data-theme="light"] header span {
+  color: #0f172a !important;
+}
+
+/* Cyan accents in sidebar/header */
+[data-theme="light"] aside .text-cyan-400,
+[data-theme="light"] header .text-cyan-400,
+[data-theme="light"] aside .text-cyan-500,
+[data-theme="light"] header .text-cyan-500 {
+  color: #0891b2 !important;
+}
+
+/* Theme toggle buttons */
+[data-theme="light"] .bg-zinc-900\/80 {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Dark card backgrounds → white cards */
+[data-theme="light"] .bg-zinc-950\/70,
+[data-theme="light"] .bg-zinc-950\/80,
+[data-theme="light"] .bg-zinc-950\/40,
+[data-theme="light"] .bg-zinc-950\/60,
+[data-theme="light"] .bg-zinc-950\/20,
+[data-theme="light"] .bg-zinc-900\/40,
+[data-theme="light"] .bg-zinc-900\/30,
+[data-theme="light"] .bg-zinc-900\/20,
+[data-theme="light"] .bg-zinc-900\/10,
+[data-theme="light"] .bg-zinc-900\/60 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Card borders */
+[data-theme="light"] .border-zinc-800,
+[data-theme="light"] .border-zinc-900,
+[data-theme="light"] .border-zinc-850 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Text overrides in dashboard content */
+[data-theme="light"] main .text-white {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] main .text-zinc-400 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] main .text-zinc-500 {
+  color: #64748b !important;
+}
+
+[data-theme="light"] main .text-zinc-300 {
+  color: #334155 !important;
+}
+
+[data-theme="light"] main .text-zinc-200 {
+  color: #1e293b !important;
+}
+
+/* Inputs in light mode */
+[data-theme="light"] select,
+[data-theme="light"] input,
+[data-theme="light"] textarea {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] select:focus,
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus {
+  border-color: #0891b2 !important;
+}
+
+/* Tables */
+[data-theme="light"] table,
+[data-theme="light"] tr,
+[data-theme="light"] td,
+[data-theme="light"] th {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .divide-zinc-900\/60 > * + * {
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] thead tr {
+  border-color: #e2e8f0 !important;
+}
+
+/* Hover rows */
+[data-theme="light"] .hover\:bg-zinc-900\/30:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* Dropdown menus */
+[data-theme="light"] .bg-zinc-900 {
+  background-color: #f8fafc !important;
+}
+
+[data-theme="light"] .bg-zinc-950 {
+  background-color: #f1f5f9 !important;
+}
+
+/* Main content area */
+[data-theme="light"] main {
+  background-color: #f8fafc !important;
 }
 
 /* =====================================================
