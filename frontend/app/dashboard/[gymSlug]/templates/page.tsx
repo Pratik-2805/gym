@@ -27,7 +27,9 @@ import {
   Flame,
   LayoutGrid,
   List,
-  Filter
+  Filter,
+  CornerUpLeft,
+  Phone
 } from 'lucide-react';
 
 interface TemplateComponent {
@@ -974,19 +976,16 @@ export default function MessageTemplatesPage() {
                         <div className="flex-1 p-3.5 space-y-3 relative bg-wa-chat-bg overflow-y-auto flex flex-col justify-end">
                           {/* Background WhatsApp Doodle grid effect */}
                           <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
-
-                          {/* Chat Message Bubble (Outgoing) */}
-                          <div className="relative self-end bg-bubble-outbound-bg text-bubble-outbound-text p-2.5 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-bubble-outbound-bg z-10 flex flex-col text-[10px] leading-relaxed">
-                            {/* Header element */}
-                            {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'TEXT' && (
-                              <div className="font-bold text-bubble-outbound-text text-[10px] border-b border-bubble-outbound-meta/20 pb-1 mb-1.5">
-                                {getComponentOf(selectedTemplate.components, 'HEADER')?.text}
-                              </div>
-                            )}
+                          {/* Chat Message Bubble (Outbound) */}
+                          <div className="relative self-end bg-bubble-outbound-bg text-bubble-outbound-text rounded-2xl rounded-tr-none w-fit max-w-[92%] shadow-md border border-bubble-outbound-bg z-10 flex flex-col text-xs leading-relaxed overflow-hidden">
+                            {/* WhatsApp Chat Bubble Tail (right side) */}
+                            <div className="absolute top-0 -right-1.5 w-0 h-0 border-t-[8px] border-t-bubble-outbound-bg border-r-[8px] border-r-transparent" />
+                            
+                            {/* Header element (Full Width Media) */}
                             {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'IMAGE' && 
                              (getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename ||
                               getComponentOf(selectedTemplate.components, 'HEADER')?.example?.header_handle?.[0]) ? (
-                              <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative">
+                              <div className="w-full overflow-hidden border-b border-wa-chat-divider max-h-[140px] relative">
                                 <img
                                   src={getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename
                                     ? `/uploads/templates/${getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename}`
@@ -994,14 +993,11 @@ export default function MessageTemplatesPage() {
                                   alt="Header Image Preview"
                                   className="w-full h-auto max-h-[140px] object-cover"
                                 />
-                                <div className="absolute bottom-1 right-1 bg-black/50 px-1 py-0.5 rounded text-[6px] text-white">
-                                  IMAGE
-                                </div>
                               </div>
                             ) : getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'VIDEO' && 
                              (getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename ||
                               getComponentOf(selectedTemplate.components, 'HEADER')?.example?.header_handle?.[0]) ? (
-                              <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative font-sans">
+                              <div className="w-full overflow-hidden border-b border-wa-chat-divider max-h-[140px] relative font-sans">
                                 <video
                                   src={getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename
                                     ? `/uploads/templates/${getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename}`
@@ -1011,48 +1007,58 @@ export default function MessageTemplatesPage() {
                                 />
                               </div>
                             ) : ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(getComponentOf(selectedTemplate.components, 'HEADER')?.format || '') && (
-                              <div className="rounded-lg bg-black/10 border border-bubble-outbound-meta/10 p-3 text-center text-[9px] text-bubble-outbound-text flex flex-col items-center justify-center gap-1 mb-1">
-                                <Upload className="h-3.5 w-3.5 text-cyan-400" />
+                              <div className="bg-black/10 border-b border-wa-chat-divider p-4 text-center text-[10px] text-bubble-outbound-text flex flex-col items-center justify-center gap-1">
+                                <Upload className="h-5 w-5 text-cyan-500" />
                                 <span className="font-bold">{getComponentOf(selectedTemplate.components, 'HEADER')?.format}</span>
-                                <span className="text-[7px] text-bubble-outbound-meta truncate max-w-[120px]">
+                                <span className="text-[8px] text-bubble-outbound-meta truncate max-w-[150px]">
                                   {getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_originalname || 'draft-file'}
                                 </span>
                               </div>
                             )}
 
-                            {/* Body element */}
-                            <div className="whitespace-pre-wrap leading-relaxed text-[10px] break-words">
-                              {getComponentOf(selectedTemplate.components, 'BODY')?.text}
+                            {/* Text content with padding */}
+                            <div className="p-3.5 flex flex-col">
+                              {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'TEXT' && (
+                                <div className="font-bold text-bubble-outbound-text text-xs border-b border-wa-chat-divider pb-1.5 mb-2 font-sans">
+                                  {getComponentOf(selectedTemplate.components, 'HEADER')?.text}
+                                </div>
+                              )}
+
+                              {/* Body element */}
+                              <div className="whitespace-pre-wrap leading-relaxed text-xs break-words text-bubble-outbound-text">
+                                {getComponentOf(selectedTemplate.components, 'BODY')?.text}
+                              </div>
+
+                              {/* Footer element */}
+                              {getComponentOf(selectedTemplate.components, 'FOOTER') && (
+                                <div className="text-[9px] text-bubble-outbound-meta mt-1.5 block">
+                                  {getComponentOf(selectedTemplate.components, 'FOOTER')?.text}
+                                </div>
+                              )}
+
+                              {/* Timestamp + double-tick */}
+                              <div className="self-end text-[8px] text-bubble-outbound-meta mt-1.5 leading-none font-sans flex items-center gap-0.5">
+                                9:30 PM <span className="text-[#53bdeb]">✓✓</span>
+                              </div>
                             </div>
 
-                            {/* Footer element */}
-                            {getComponentOf(selectedTemplate.components, 'FOOTER') && (
-                              <div className="text-[8px] text-bubble-outbound-meta mt-1 block">
-                                {getComponentOf(selectedTemplate.components, 'FOOTER')?.text}
+                            {/* Integrated Buttons listing inside outbound bubble */}
+                            {getComponentOf(selectedTemplate.components, 'BUTTONS') && (
+                              <div className="border-t border-wa-chat-divider flex flex-col">
+                                {getComponentOf(selectedTemplate.components, 'BUTTONS')?.buttons?.map((btn: any, idx: number) => (
+                                  <div
+                                    key={idx}
+                                    className="w-full border-t border-wa-chat-divider first:border-t-0 py-3 px-3 text-xs text-wa-chat-button-text font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer hover:bg-black/10 transition-all"
+                                  >
+                                    {btn.type === 'URL' && <ExternalLink className="h-3 w-3 text-wa-chat-button-text" />}
+                                    {btn.type === 'PHONE_NUMBER' && <Phone className="h-3 w-3 text-wa-chat-button-text" />}
+                                    {btn.type === 'QUICK_REPLY' && <CornerUpLeft className="h-3 w-3 text-wa-chat-button-text" />}
+                                    {btn.text}
+                                  </div>
+                                ))}
                               </div>
                             )}
-
-                            {/* Timestamp & checkmarks */}
-                            <div className="self-end flex items-center gap-1 mt-1 text-[7px] text-bubble-outbound-meta leading-none">
-                              <span>12:34 PM</span>
-                              <span className="text-[#53bdeb]">✓✓</span>
-                            </div>
                           </div>
-
-                          {/* Interactive Buttons listing underneath outgoing bubble */}
-                          {getComponentOf(selectedTemplate.components, 'BUTTONS') && (
-                            <div className="self-end w-full max-w-[90%] space-y-1.5 z-10">
-                              {getComponentOf(selectedTemplate.components, 'BUTTONS')?.buttons?.map((btn: any, idx: number) => (
-                                <div
-                                  key={idx}
-                                  className="w-full bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-lg py-1.5 px-3 text-[10px] text-cyan-400 font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm"
-                                >
-                                  {btn.type === 'URL' && <ExternalLink className="h-3 w-3" />}
-                                  {btn.text}
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       </div>
 
@@ -1453,28 +1459,22 @@ export default function MessageTemplatesPage() {
                         <div className="flex-1 p-3.5 space-y-3 relative bg-wa-chat-bg overflow-y-auto flex flex-col justify-end font-sans">
                           {/* Background WhatsApp Doodle grid effect */}
                           <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
-
-                          {/* Chat Message Bubble (Outgoing) */}
-                          <div className="relative self-end bg-bubble-outbound-bg text-bubble-outbound-text p-2.5 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-bubble-outbound-bg z-10 flex flex-col text-[10px] leading-relaxed">
-                            {/* Header element */}
-                            {formHeaderType === 'TEXT' && formHeaderText && (
-                              <div className="font-bold text-bubble-outbound-text text-[10px] border-b border-bubble-outbound-meta/20 pb-1 mb-1.5">
-                                {formHeaderText}
-                              </div>
-                            )}
+                          {/* Chat Message Bubble (Outbound) */}
+                          <div className="relative self-end bg-bubble-outbound-bg text-bubble-outbound-text rounded-2xl rounded-tr-none w-fit max-w-[92%] shadow-md border border-bubble-outbound-bg z-10 flex flex-col text-xs leading-relaxed overflow-hidden">
+                            {/* WhatsApp Chat Bubble Tail (right side) */}
+                            <div className="absolute top-0 -right-1.5 w-0 h-0 border-t-[8px] border-t-bubble-outbound-bg border-r-[8px] border-r-transparent" />
+                            
+                            {/* Header element (Full Width Media) */}
                             {formHeaderType === 'IMAGE' && formHeaderPreviewUrl ? (
-                              <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative">
+                              <div className="w-full overflow-hidden border-b border-wa-chat-divider max-h-[140px] relative">
                                 <img
                                   src={formHeaderPreviewUrl}
                                   alt="Header Image Preview"
                                   className="w-full h-auto max-h-[140px] object-cover"
                                 />
-                                <div className="absolute bottom-1 right-1 bg-black/50 px-1 py-0.5 rounded text-[6px] text-white">
-                                  IMAGE
-                                </div>
                               </div>
                             ) : formHeaderType === 'VIDEO' && formHeaderPreviewUrl ? (
-                              <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative font-sans">
+                              <div className="w-full overflow-hidden border-b border-wa-chat-divider max-h-[140px] relative font-sans">
                                 <video
                                   src={formHeaderPreviewUrl}
                                   className="w-full h-auto max-h-[140px] object-cover"
@@ -1482,48 +1482,58 @@ export default function MessageTemplatesPage() {
                                 />
                               </div>
                             ) : ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(formHeaderType) && (
-                              <div className="rounded-lg bg-black/10 border border-bubble-outbound-meta/10 p-3 text-center text-[9px] text-bubble-outbound-text flex flex-col items-center justify-center gap-1 mb-1">
-                                <Upload className="h-3.5 w-3.5 text-cyan-400" />
+                              <div className="bg-black/10 border-b border-wa-chat-divider p-4 text-center text-[10px] text-bubble-outbound-text flex flex-col items-center justify-center gap-1">
+                                <Upload className="h-5 w-5 text-cyan-500" />
                                 <span className="font-bold">{formHeaderType}</span>
-                                <span className="text-[7px] text-bubble-outbound-meta truncate max-w-[120px]">
+                                <span className="text-[8px] text-bubble-outbound-meta truncate max-w-[150px]">
                                   {formHeaderFile ? formHeaderFile.name : `Select ${formHeaderType.toLowerCase()} file`}
                                 </span>
                               </div>
                             )}
 
-                            {/* Body element */}
-                            <div className="whitespace-pre-wrap leading-relaxed text-[10px] break-words">
-                              {formBody || 'Enter template body content...'}
+                            {/* Text content with padding */}
+                            <div className="p-3.5 flex flex-col">
+                              {formHeaderType === 'TEXT' && formHeaderText && (
+                                <div className="font-bold text-bubble-outbound-text text-xs border-b border-wa-chat-divider pb-1.5 mb-2 font-sans">
+                                  {formHeaderText}
+                                </div>
+                              )}
+
+                              {/* Body element */}
+                              <div className="whitespace-pre-wrap leading-relaxed text-xs break-words text-bubble-outbound-text">
+                                {formBody || 'Enter template body content...'}
+                              </div>
+
+                              {/* Footer element */}
+                              {formFooter && (
+                                <div className="text-[9px] text-bubble-outbound-meta mt-1.5 block">
+                                  {formFooter}
+                                </div>
+                              )}
+
+                              {/* Timestamp + double-tick */}
+                              <div className="self-end text-[8px] text-bubble-outbound-meta mt-1.5 leading-none font-sans flex items-center gap-0.5">
+                                9:30 PM <span className="text-[#53bdeb]">✓✓</span>
+                              </div>
                             </div>
 
-                            {/* Footer element */}
-                            {formFooter && (
-                              <div className="text-[8px] text-bubble-outbound-meta mt-1 block">
-                                {formFooter}
+                            {/* Integrated Buttons listing inside outbound bubble */}
+                            {formButtons.length > 0 && (
+                              <div className="border-t border-wa-chat-divider flex flex-col">
+                                {formButtons.map((btn) => (
+                                  <div
+                                    key={btn.id}
+                                    className="w-full border-t border-wa-chat-divider first:border-t-0 py-3 px-3 text-xs text-wa-chat-button-text font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer hover:bg-black/10 transition-all font-sans"
+                                  >
+                                    {btn.type === 'URL' && <ExternalLink className="h-3 w-3 text-wa-chat-button-text" />}
+                                    {btn.type === 'PHONE_NUMBER' && <Phone className="h-3 w-3 text-wa-chat-button-text" />}
+                                    {btn.type === 'QUICK_REPLY' && <CornerUpLeft className="h-3 w-3 text-wa-chat-button-text" />}
+                                    {btn.text || 'Button Label'}
+                                  </div>
+                                ))}
                               </div>
                             )}
-
-                            {/* Timestamp & checkmarks */}
-                            <div className="self-end flex items-center gap-1 mt-1 text-[7px] text-bubble-outbound-meta leading-none">
-                              <span>12:34 PM</span>
-                              <span className="text-[#53bdeb]">✓✓</span>
-                            </div>
                           </div>
-
-                          {/* Interactive Buttons listing underneath outgoing bubble */}
-                          {formButtons.length > 0 && (
-                            <div className="self-end w-full max-w-[90%] space-y-1.5 z-10">
-                              {formButtons.map((btn) => (
-                                <div
-                                  key={btn.id}
-                                  className="w-full bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-lg py-1.5 px-3 text-[10px] text-cyan-400 font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm font-sans"
-                                >
-                                  {btn.type === 'URL' && <ExternalLink className="h-3 w-3" />}
-                                  {btn.text || 'Button Label'}
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       </div>
 
@@ -1594,46 +1604,59 @@ function renderComponentSummary(componentsJson: any): React.ReactNode {
   const buttons = list.find((c: any) => c.type === 'BUTTONS');
 
   return (
-    <div className="bg-wa-chat-bg rounded-xl p-3.5 border border-zinc-800 relative overflow-hidden font-sans select-none h-[170px] max-h-[170px] flex flex-col justify-between transition-all duration-300">
+    <div className="bg-wa-chat-bg rounded-xl p-3.5 border border-black/20 ring-1 ring-black/10 relative overflow-hidden font-sans select-none h-[175px] max-h-[175px] flex flex-col justify-start transition-all duration-300">
+      {/* Background WhatsApp Doodle grid effect */}
+      <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
       {/* Outer wrapper representing the chat view */}
-      <div className="flex flex-col items-start w-full overflow-hidden">
-        {/* Message bubble */}
-        <div className="w-[90%] max-w-[90%] bg-bubble-outbound-bg rounded-2xl rounded-tl-none p-3 shadow-md space-y-1 relative text-[11px] leading-relaxed transition-all duration-300">
-          {/* WhatsApp Chat Bubble Tail */}
-          <div className="absolute top-0 -left-1.5 w-0 h-0 border-t-[8px] border-t-bubble-outbound-bg border-l-[8px] border-l-transparent transition-all duration-300" />
+      <div className="flex flex-col items-end w-full overflow-y-auto z-10 pl-1">
+        {/* Message bubble (Outbound) */}
+        <div className="w-fit max-w-[90%] bg-bubble-outbound-bg text-bubble-outbound-text rounded-2xl rounded-tr-none shadow-md relative text-[11px] leading-relaxed transition-all duration-300 self-end border border-bubble-outbound-bg overflow-hidden flex flex-col">
+          {/* WhatsApp Chat Bubble Tail (right side) */}
+          <div className="absolute top-0 -right-1.5 w-0 h-0 border-t-[8px] border-t-bubble-outbound-bg border-r-[8px] border-r-transparent transition-all duration-300" />
           
-          {header && (
-            <div className="font-extrabold text-[10px] text-bubble-outbound-meta uppercase tracking-wide border-b border-zinc-800/10 pb-1 mb-1 font-sans truncate">
-              {header.format === 'TEXT' ? header.text : `📎 ${header.format} Header`}
+          {/* Bubble content wrapper (for padding) */}
+          <div className="p-2.5 flex flex-col">
+            {header && (
+              <div className="font-extrabold text-[9px] text-bubble-outbound-meta uppercase tracking-wide border-b border-wa-chat-divider pb-1 mb-1 font-sans truncate">
+                {header.format === 'TEXT' ? header.text : `📎 ${header.format} Header`}
+              </div>
+            )}
+            
+            {body && (
+              <p className="text-bubble-outbound-text whitespace-pre-wrap font-normal font-sans line-clamp-3">
+                {body.text}
+              </p>
+            )}
+            
+            {footer && (
+              <div className="text-[9px] text-bubble-outbound-meta mt-0.5 font-medium font-sans truncate">
+                {footer.text}
+              </div>
+            )}
+
+            {/* Timestamp + double-tick */}
+            <div className="self-end text-[7px] text-bubble-outbound-meta mt-0.5 font-sans leading-none flex items-center gap-0.5">
+              9:30 PM <span className="text-[#53bdeb]">✓✓</span>
             </div>
-          )}
-          
-          {body && (
-            <p className="text-bubble-outbound-text whitespace-pre-wrap font-normal font-sans line-clamp-3">
-              {body.text}
-            </p>
-          )}
-          
-          {footer && (
-            <div className="text-[9px] text-bubble-outbound-meta mt-0.5 font-medium font-sans truncate">
-              {footer.text}
+          </div>
+
+          {/* Integrated Buttons inside the bubble */}
+          {buttons && buttons.buttons && buttons.buttons.length > 0 && (
+            <div className="border-t border-wa-chat-divider flex flex-col">
+              {buttons.buttons.slice(0, 2).map((b: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="w-full border-t border-wa-chat-divider first:border-t-0 py-1.5 px-3 text-[9px] text-wa-chat-button-text font-bold text-center flex items-center justify-center gap-1 hover:bg-black/10 transition-all duration-300"
+                >
+                  {b.type === 'URL' && <ExternalLink className="h-2.5 w-2.5" />}
+                  {b.type === 'PHONE_NUMBER' && <Phone className="h-2.5 w-2.5" />}
+                  {b.type === 'QUICK_REPLY' && <CornerUpLeft className="h-2.5 w-2.5" />}
+                  {b.text}
+                </div>
+              ))}
             </div>
           )}
         </div>
-
-        {/* Buttons list rendered underneath message bubble like real interactive templates */}
-        {buttons && buttons.buttons && buttons.buttons.length > 0 && (
-          <div className="space-y-1 mt-1.5 w-[90%] max-w-xs pl-2">
-            {buttons.buttons.slice(0, 2).map((b: any, idx: number) => (
-              <div
-                key={idx}
-                className="w-full bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-lg py-1 px-3 text-[10px] text-cyan-400 font-bold text-center flex items-center justify-center gap-1 shadow-sm truncate transition-all duration-300"
-              >
-                {b.text}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
