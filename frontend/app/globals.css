@@ -533,85 +533,10 @@ body {
   background-size: 40px 40px;
   animation: moveGridPattern 10s linear infinite;
   z-index: 1;
-  opacity: 0;
-  transition: opacity 0.4s ease-in-out;
-}
-
-.noir-mode-active .noir-checkerboard {
   opacity: 1;
 }
 
-/* Premium Black and White Switch (Matching Reference Image) */
-.noir-switch {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 20px 8px 14px;
-  background: #ffffff;
-  color: #000000;
-  border: 4px solid #000000;
-  border-radius: 9999px; /* Exact pill shape */
-  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  box-shadow: 6px 6px 0px #000000; /* Silhouette offset shadow */
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-  user-select: none;
-}
-
-.noir-switch:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 7px 7px 0px #000000;
-}
-
-.noir-switch:active {
-  transform: translate(3px, 3px);
-  box-shadow: 3px 3px 0px #000000;
-}
-
-.noir-switch-checkbox {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.noir-switch-box {
-  width: 22px;
-  height: 22px;
-  border: 4px solid #000000;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-  border-radius: 6px; /* Rounded corners for the checkbox square */
-  flex-shrink: 0;
-}
-
-.noir-switch-checkbox:checked + .noir-switch-box {
-  background: #000000;
-}
-
-.noir-switch-box::after {
-  content: "";
-  width: 8px;
-  height: 8px;
-  background: #ffffff;
-  opacity: 0;
-  transition: opacity 0.15s ease-in-out;
-  border-radius: 2px;
-}
-
-.noir-switch-checkbox:checked + .noir-switch-box::after {
-  opacity: 1;
-}
-
-/* Page color does NOT change in Noir Mode (filter grayscale removed) */
+/* Noir mode is always active — brutalist offset shadow on all cards & CTAs */
 .noir-mode-active {
   transition: all 0.5s ease-in-out;
 }
@@ -621,7 +546,6 @@ body {
   color: #ffffff;
 }
 
-/* All landing page main CTA buttons & cards change to have the Noir border & offset shadow style */
 .noir-mode-active header a[href="/register"],
 .noir-mode-active section a[href="/register"],
 .noir-mode-active section a[href="#demo"],
@@ -631,7 +555,8 @@ body {
 .noir-mode-active .testimonial-card,
 .noir-mode-active .pricing-card,
 .noir-mode-active .demo-prompt-btn,
-.noir-mode-active .roi-calculator-card {
+.noir-mode-active .roi-calculator-card,
+.noir-mode-active .demo-preview-card {
   border: 4px solid #000000 !important;
   box-shadow: 6px 6px 0px #000000 !important;
   text-shadow: none !important;
@@ -648,7 +573,8 @@ body {
 .noir-mode-active .testimonial-card:hover,
 .noir-mode-active .pricing-card:hover,
 .noir-mode-active .demo-prompt-btn:hover,
-.noir-mode-active .roi-calculator-card:hover {
+.noir-mode-active .roi-calculator-card:hover,
+.noir-mode-active .demo-preview-card:hover {
   transform: translate(-1.5px, -1.5px) !important;
   box-shadow: 7.5px 7.5px 0px #000000 !important;
 }
@@ -662,9 +588,91 @@ body {
 .noir-mode-active .testimonial-card:active,
 .noir-mode-active .pricing-card:active,
 .noir-mode-active .demo-prompt-btn:active,
-.noir-mode-active .roi-calculator-card:active {
+.noir-mode-active .roi-calculator-card:active,
+.noir-mode-active .demo-preview-card:active {
   transform: translate(3px, 3px) !important;
   box-shadow: 3px 3px 0px #000000 !important;
+}
+
+/* =====================================================
+   DEMO SHOWCASE STYLES
+   ===================================================== */
+
+.demo-tab {
+  position: relative;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.demo-tab:hover {
+  color: #334155;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.demo-tab-active {
+  color: #4f46e5 !important;
+  background: #eef2ff !important;
+  border-color: #a5b4fc !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+.demo-preview-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.08);
+}
+
+.demo-browser-chrome {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.demo-browser-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.demo-browser-url {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* Animated stat shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.stat-shimmer {
+  background: linear-gradient(90deg, transparent 30%, rgba(99, 102, 241, 0.06) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
 }
 
 /* =====================================================
@@ -709,4 +717,125 @@ body {
 .pulse-online {
   animation: pulse-green 2s infinite;
   border-radius: 9999px;
-}
+}
+
+/* =====================================================
+   ABOUT PAGE STYLES
+   ===================================================== */
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+.float-animation {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-animate {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* =====================================================
+   NEUMORPHIC SOFT UI UTILITIES
+   ===================================================== */
+
+.neu-flat {
+  background: #f0f2f5;
+  box-shadow: 6px 6px 12px rgba(165, 180, 252, 0.28), -6px -6px 12px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.neu-inset {
+  background: #f0f2f5;
+  box-shadow: inset 4px 4px 8px rgba(165, 180, 252, 0.35), inset -4px -4px 8px rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.neu-button {
+  background: #f0f2f5;
+  box-shadow: 4px 4px 8px rgba(165, 180, 252, 0.3), -4px -4px 8px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neu-button:hover {
+  box-shadow: 2px 2px 4px rgba(165, 180, 252, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.9);
+  transform: translateY(0.5px);
+}
+
+.neu-button-active {
+  box-shadow: inset 3px 3px 6px rgba(165, 180, 252, 0.4), inset -3px -3px 6px rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Neubrutalist combination: Neumorphic body with thick black borders & offset shadows */
+.noir-mode-active .feature-card.neu-flat,
+.noir-mode-active .pricing-card.neu-flat,
+.noir-mode-active .roi-calculator-card.neu-flat,
+.noir-mode-active .demo-preview-card.neu-flat {
+  border: 4px solid #000000 !important;
+  box-shadow: 6px 6px 0px #000000, 10px 10px 20px rgba(165, 180, 252, 0.15) !important;
+}
+
+/* =====================================================
+   TEAR PAGE LOADER ANIMATIONS & Edge SVG
+   ===================================================== */
+
+.tear-loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.tear-loader-panel {
+  width: 50vw;
+  height: 100vh;
+  background-color: #0b1020;
+  position: relative;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.tear-edge-left {
+  position: absolute;
+  top: 0;
+  right: -16px;
+  width: 32px;
+  height: 100%;
+  fill: #0b1020;
+  z-index: 10;
+}
+
+.tear-edge-right {
+  position: absolute;
+  top: 0;
+  left: -16px;
+  width: 32px;
+  height: 100%;
+  fill: #0b1020;
+  z-index: 10;
+}
+
+/* Jagged divider glow */
+.tear-divider-glow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #4f46e5, #ec4899, #10b981);
+  box-shadow: 0 0 15px #4f46e5, 0 0 30px #ec4899;
+  z-index: 15;
+}
+
