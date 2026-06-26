@@ -171,7 +171,6 @@ export interface Message {
   }[];
   outboundPayload?: any;
   messageType?: string;
-  content?: string;
 }
 
 export interface Template {

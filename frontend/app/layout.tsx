@@ -81,22 +81,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var saved = localStorage.getItem('fitflow-theme');
-                  if (saved === 'dark' || saved === 'coloured' || saved === 'light') {
-                    document.documentElement.setAttribute('data-theme', saved);
-                  } else {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                  }
-                } catch (e) {}
-              })();
-            `
-          }}
-        />
         {/* Generative Engine Optimization (GEO) JSON-LD Structured Data */}
         <script
           type="application/ld+json"
