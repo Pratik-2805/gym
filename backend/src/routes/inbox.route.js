@@ -91,6 +91,18 @@ router.get("/", async (req, res) => {
           }
         });
 
+        // Check for active membership
+        const activeMembership = await prisma.membership.findFirst({
+          where: {
+            memberId: member.id,
+            status: "ACTIVE",
+            endDate: { gte: new Date() }
+          },
+          include: {
+            plan: true
+          }
+        });
+
         const parsedText = lastMessage ? parseMessageText(lastMessage.text) : null;
 
         // Compute WhatsApp 24-hour session window details
@@ -113,10 +125,13 @@ router.get("/", async (req, res) => {
         return {
           id: member.id,
           name: member.memberName,
+          whatsappName: member.whatsappName,
           phone: member.phone,
           isBotDisabled: member.isBotDisabled,
           notes: member.notes,
           isBlocked: !!member.blockedAt,
+          isMember: !!activeMembership,
+          planName: activeMembership ? activeMembership.plan.name : null,
           lastMessage: lastMessage
             ? {
                 id: lastMessage.id,
@@ -173,6 +188,17 @@ router.get("/:memberId", async (req, res) => {
       return res.status(404).json({ error: "Member not found" });
     }
 
+    const activeMembership = await prisma.membership.findFirst({
+      where: {
+        memberId: member.id,
+        status: "ACTIVE",
+        endDate: { gte: new Date() }
+      },
+      include: {
+        plan: true
+      }
+    });
+
     const messages = await prisma.whatsAppMessage.findMany({
       where: {
         gymId: gym.id,
@@ -222,10 +248,13 @@ router.get("/:memberId", async (req, res) => {
       member: {
         id: member.id,
         name: member.memberName,
+        whatsappName: member.whatsappName,
         phone: member.phone,
         isBotDisabled: member.isBotDisabled,
         notes: member.notes,
-        blockedAt: member.blockedAt
+        blockedAt: member.blockedAt,
+        isMember: !!activeMembership,
+        planName: activeMembership ? activeMembership.plan.name : null
       },
       sessionStarted,
       sessionActive,

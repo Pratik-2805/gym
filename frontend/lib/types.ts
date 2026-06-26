@@ -86,6 +86,8 @@ export interface Conversation {
   phone: string;
   status?: string;
   leadId?: string;
+  isMember?: boolean;
+  planName?: string | null;
 
   lastMessage: string;
   lastActivity: string;

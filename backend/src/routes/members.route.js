@@ -1,5 +1,6 @@
 import { Router } from "express";
 import prisma from "../prisma.js";
+import { getIO } from "../socket.js";
 
 const router = Router({ mergeParams: true });
 
@@ -354,6 +355,100 @@ router.delete("/:memberId", async (req, res) => {
     res.json({ success: true, message: "Member deleted successfully" });
   } catch (err) {
     console.error("❌ [Member DELETE] Error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+/**
+ * =====================================
+ * CREATE MEMBERSHIP (ASSIGN PLAN)
+ * =====================================
+ */
+router.post("/:memberId/memberships", async (req, res) => {
+  const { gymSlug, memberId } = req.params;
+  const { planId, startDate } = req.body;
+
+  if (!planId) {
+    return res.status(400).json({ error: "Membership Plan is required" });
+  }
+
+  try {
+    const gym = await prisma.gym.findUnique({
+      where: { slug: gymSlug.toLowerCase() },
+      select: { id: true, name: true }
+    });
+
+    if (!gym) {
+      return res.status(404).json({ error: "Gym not found" });
+    }
+
+    const member = await prisma.member.findUnique({
+      where: { id: memberId }
+    });
+
+    if (!member || member.gymId !== gym.id) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    const plan = await prisma.membershipPlan.findUnique({
+      where: { id: planId }
+    });
+
+    if (!plan || plan.gymId !== gym.id) {
+      return res.status(404).json({ error: "Membership plan not found" });
+    }
+
+    const start = startDate ? new Date(startDate) : new Date();
+    const end = new Date(start.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+
+    // Create the membership
+    const membership = await prisma.membership.create({
+      data: {
+        gymId: gym.id,
+        memberId: member.id,
+        planId: plan.id,
+        startDate: start,
+        endDate: end,
+        status: "ACTIVE"
+      },
+      include: {
+        plan: true
+      }
+    });
+
+    // Also queue a welcome/activation template message
+    await prisma.notification.create({
+      data: {
+        gymId: gym.id,
+        memberId: member.id,
+        recipientPhone: member.phone,
+        title: `TEMPLATE:membership_active:${member.memberName},${plan.name},${end.toLocaleDateString('en-IN')}`,
+        message: `Hello ${member.memberName}, your ${plan.name} membership at ${gym.name} is now active until ${end.toLocaleDateString('en-IN')}!`,
+        type: "ACTIVATION",
+        status: "PENDING",
+      },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        action: "MEMBERSHIP_CREATE",
+        details: `Assigned plan ${plan.name} to member ${member.memberName}. Expires on ${end.toLocaleDateString('en-IN')}.`,
+        gymId: gym.id,
+        userId: req.user?.userId || null
+      }
+    });
+
+    // Send real-time socket events
+    try {
+      const io = getIO();
+      io.to(`gym:${gym.id}`).emit("inbox:update");
+    } catch (wsErr) {
+      console.error("Socket emit failed on membership create:", wsErr);
+    }
+
+    res.status(201).json({ success: true, membership });
+  } catch (err) {
+    console.error("❌ [Membership POST] Error:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
