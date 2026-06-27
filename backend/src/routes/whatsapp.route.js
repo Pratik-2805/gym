@@ -3,6 +3,8 @@ import prisma from "../prisma.js";
 import { authenticateToken } from "../middleware/auth.js";
 import { requireRoles } from "../middleware/requireRole.middleware.js";
 import { encrypt, decrypt } from "../utils/encryption.js";
+import multer from "multer";
+import { uploadTemplateMediaToMeta } from "../utils/uploadTemplateMediaToMeta.js";
 
 const router = Router({ mergeParams: true });
 
@@ -11,6 +13,17 @@ const META_API_VERSION = process.env.META_API_VERSION || "v20.0";
 const DEFAULT_LANGUAGE = process.env.META_DEFAULT_LANGUAGE || "en_US";
 const DEFAULT_CODE_METHOD = process.env.META_CODE_METHOD || "SMS";
 const GRAPH_BASE_URL = process.env.META_GRAPH_BASE_URL || "https://graph.facebook.com";
+
+const upload = multer({
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+      cb(null, true);
+    } else {
+      cb(new Error("Only JPG and PNG images are allowed"), false);
+    }
+  },
+});
 
 /**
  * Helper → Generate PIN
@@ -937,6 +950,152 @@ router.post(
     } catch (err) {
       console.error("❌ [Sync Templates] Error:", err);
       res.status(400).json({ error: err.message || "Failed to synchronize templates" });
+    }
+  }
+);
+
+/**
+ * =====================================
+ * GET BUSINESS PROFILE
+ * =====================================
+ * Access: GYM_OWNER, SUPERADMIN
+ */
+router.get(
+  "/business-profile",
+  authenticateToken,
+  requireRoles(["GYM_OWNER", "SUPERADMIN"]),
+  async (req, res) => {
+    const { gymSlug } = req.params;
+    
+    try {
+      const gym = await prisma.gym.findUnique({
+        where: { slug: gymSlug.toLowerCase() },
+      });
+
+      if (!gym || !gym.whatsapp_access_token || !gym.whatsapp_phone_number_id) {
+        return res.status(400).json({ error: "WhatsApp not fully configured" });
+      }
+
+      const accessToken = decrypt(gym.whatsapp_access_token);
+      const phoneNumberId = gym.whatsapp_phone_number_id;
+
+      const resp = await fetch(
+        `${GRAPH_BASE_URL}/${META_API_VERSION}/${phoneNumberId}/whatsapp_business_profile?fields=about,address,description,email,profile_picture_url,websites,vertical`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        return res.status(400).json({
+          error: "Failed to fetch business profile",
+          metaError: data?.error || data,
+        });
+      }
+
+      res.json(data.data?.[0] || {});
+    } catch (err) {
+      console.error("❌ [Get Business Profile] Error:", err);
+      res.status(500).json({ error: "Failed to fetch business profile" });
+    }
+  }
+);
+
+/**
+ * =====================================
+ * UPDATE BUSINESS PROFILE
+ * =====================================
+ * Access: GYM_OWNER, SUPERADMIN
+ */
+router.post(
+  "/business-profile",
+  authenticateToken,
+  requireRoles(["GYM_OWNER", "SUPERADMIN"]),
+  upload.single("profile_picture"),
+  async (req, res) => {
+    const { gymSlug } = req.params;
+    
+    try {
+      const gym = await prisma.gym.findUnique({
+        where: { slug: gymSlug.toLowerCase() },
+      });
+
+      if (!gym || !gym.whatsapp_access_token || !gym.whatsapp_phone_number_id) {
+        return res.status(400).json({ error: "WhatsApp not fully configured" });
+      }
+
+      const accessToken = decrypt(gym.whatsapp_access_token);
+      const phoneNumberId = gym.whatsapp_phone_number_id;
+      
+      let profile_picture_handle = undefined;
+      
+      if (req.file) {
+        try {
+          profile_picture_handle = await uploadTemplateMediaToMeta({
+            accessToken,
+            appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
+            buffer: req.file.buffer,
+            mimeType: req.file.mimetype,
+            fileName: req.file.originalname,
+          });
+        } catch (err) {
+          console.error("Failed to upload profile picture to Meta:", err);
+          return res.status(400).json({ error: "Failed to upload profile picture to Meta", metaError: err.message });
+        }
+      }
+
+      let websites = [];
+      if (req.body.websites) {
+        try {
+          websites = JSON.parse(req.body.websites);
+        } catch (e) {
+          websites = typeof req.body.websites === "string" ? [req.body.websites] : req.body.websites;
+        }
+      }
+
+      const payload = {
+        messaging_product: "whatsapp",
+        about: req.body.about || "",
+        address: req.body.address || "",
+        description: req.body.description || "",
+        email: req.body.email || "",
+        vertical: req.body.vertical || "",
+        websites: websites,
+      };
+      
+      if (profile_picture_handle) {
+        payload.profile_picture_handle = profile_picture_handle;
+      }
+
+      const resp = await fetch(
+        `${GRAPH_BASE_URL}/${META_API_VERSION}/${phoneNumberId}/whatsapp_business_profile`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        return res.status(400).json({
+          error: "Failed to update business profile",
+          metaError: data?.error || data,
+        });
+      }
+
+      res.json({ success: true, message: "Business profile updated successfully" });
+    } catch (err) {
+      console.error("❌ [Update Business Profile] Error:", err);
+      res.status(500).json({ error: "Failed to update business profile" });
     }
   }
 );

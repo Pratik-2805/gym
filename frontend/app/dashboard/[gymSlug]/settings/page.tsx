@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Zap,
 } from "lucide-react";
+import BusinessProfileForm from "@/components/whatsapp/BusinessProfileForm";
 
 type WhatsAppStatus = "not_configured" | "connected" | "error";
 type SetupMethod = "embedded" | "manual";
@@ -757,6 +758,10 @@ export default function WhatsAppSetupPage() {
               </div>
             </div>
 
+            {/* Business Profile */}
+            <div className="mt-8">
+              <BusinessProfileForm gymSlug={gymSlug} />
+            </div>
 
           </motion.div>
         )}
