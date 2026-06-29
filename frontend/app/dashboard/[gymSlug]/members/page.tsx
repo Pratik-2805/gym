@@ -22,10 +22,15 @@ interface MemberData {
   isBotDisabled: boolean;
   memberships: Array<{
     id: string;
-    status: 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+    planId: string;
+    startDate: string;
     endDate: string;
+    status: 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
     plan: {
+      id: string;
       name: string;
+      price: number;
+      durationDays: number;
     };
   }>;
 }
@@ -62,6 +67,17 @@ export default function MembersPage() {
   const [emergencyContact, setEmergencyContact] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Plans & Subscription Fields
+  const [plans, setPlans] = useState<any[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const getTodayString = () => {
+    const local = new Date();
+    return local.toISOString().split('T')[0];
+  };
+
   const fetchMembers = async () => {
     setIsLoading(true);
     try {
@@ -77,9 +93,47 @@ export default function MembersPage() {
     }
   };
 
+  const fetchPlans = async () => {
+    try {
+      const res = await fetch(`/api/dashboard/${gymSlug}/plans`);
+      if (res.ok) {
+        const data = await res.json();
+        setPlans(data.plans || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchMembers();
+    fetchPlans();
   }, [gymSlug]);
+
+  const handlePlanChange = (planId: string) => {
+    setSelectedPlanId(planId);
+    if (!planId) {
+      setEndDate('');
+      return;
+    }
+    const selectedPlan = plans.find(p => p.id === planId);
+    if (selectedPlan) {
+      const start = startDate ? new Date(startDate) : new Date();
+      const end = new Date(start.getTime() + selectedPlan.durationDays * 24 * 60 * 60 * 1000);
+      setEndDate(end.toISOString().split('T')[0]);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedPlanId && startDate) {
+      const selectedPlan = plans.find(p => p.id === selectedPlanId);
+      if (selectedPlan) {
+        const start = new Date(startDate);
+        const end = new Date(start.getTime() + selectedPlan.durationDays * 24 * 60 * 60 * 1000);
+        setEndDate(end.toISOString().split('T')[0]);
+      }
+    }
+  }, [startDate, selectedPlanId, plans]);
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +157,9 @@ export default function MembersPage() {
           dob: dob || undefined,
           emergencyContact,
           notes,
+          planId: selectedPlanId || undefined,
+          startDate: selectedPlanId ? startDate : undefined,
+          endDate: selectedPlanId ? endDate : undefined,
         }),
       });
 
@@ -118,6 +175,9 @@ export default function MembersPage() {
         setDob('');
         setEmergencyContact('');
         setNotes('');
+        setSelectedPlanId('');
+        setStartDate('');
+        setEndDate('');
         
         await fetchMembers();
       } else {
@@ -129,6 +189,21 @@ export default function MembersPage() {
     }
   };
 
+  const openAddModal = () => {
+    setName('');
+    setPhone('');
+    setEmail('');
+    setAddress('');
+    setDob('');
+    setEmergencyContact('');
+    setNotes('');
+    setSelectedPlanId('');
+    setStartDate(getTodayString());
+    setEndDate('');
+    setError('');
+    setIsAdding(true);
+  };
+
   const openEditModal = (member: MemberData) => {
     setEditingMember(member);
     setName(member.name || '');
@@ -138,6 +213,19 @@ export default function MembersPage() {
     setDob(member.dob ? new Date(member.dob).toISOString().split('T')[0] : '');
     setEmergencyContact(member.emergencyContact || '');
     setNotes(member.notes || '');
+
+    // Populate plan details
+    const activeSub = member.memberships?.find(s => s.status === 'ACTIVE') || member.memberships?.[0];
+    if (activeSub) {
+      setSelectedPlanId(activeSub.planId || activeSub.plan.id);
+      setStartDate(activeSub.startDate ? new Date(activeSub.startDate).toISOString().split('T')[0] : getTodayString());
+      setEndDate(activeSub.endDate ? new Date(activeSub.endDate).toISOString().split('T')[0] : '');
+    } else {
+      setSelectedPlanId('');
+      setStartDate(getTodayString());
+      setEndDate('');
+    }
+
     setError('');
   };
 
@@ -164,6 +252,9 @@ export default function MembersPage() {
           dob: dob || undefined,
           emergencyContact,
           notes,
+          planId: selectedPlanId || null,
+          startDate: selectedPlanId ? startDate : null,
+          endDate: selectedPlanId ? endDate : null,
         }),
       });
 
@@ -179,6 +270,9 @@ export default function MembersPage() {
         setDob('');
         setEmergencyContact('');
         setNotes('');
+        setSelectedPlanId('');
+        setStartDate('');
+        setEndDate('');
         
         await fetchMembers();
       } else {
@@ -229,7 +323,7 @@ export default function MembersPage() {
           <p className="text-xs text-zinc-500 mt-1">Manage member profiles, contact logs, and subscriptions.</p>
         </div>
         <button
-          onClick={() => setIsAdding(true)}
+          onClick={openAddModal}
           className="flex items-center justify-center gap-1.5 rounded-xl bg-cyan-600 px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-cyan-500"
         >
           <UserPlus className="h-4 w-4" /> Add New Member
@@ -458,6 +552,53 @@ export default function MembersPage() {
                 />
               </div>
 
+              {/* Membership Plan Section */}
+              <div className="border-t border-zinc-800/80 pt-4 mt-2">
+                <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-3">Membership Plan</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Select Plan</label>
+                    <select
+                      value={selectedPlanId}
+                      onChange={(e) => handlePlanChange(e.target.value)}
+                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="">No Active Plan</option>
+                      {plans.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} - ₹{p.price} ({p.durationDays} Days)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedPlanId && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Start Date</label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          required
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">End Date</label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          required
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
@@ -658,6 +799,53 @@ export default function MembersPage() {
                   rows={2}
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
                 />
+              </div>
+
+              {/* Membership Plan Section */}
+              <div className="border-t border-zinc-800/80 pt-4 mt-2">
+                <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-3">Membership Plan</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Select Plan</label>
+                    <select
+                      value={selectedPlanId}
+                      onChange={(e) => handlePlanChange(e.target.value)}
+                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-cyan-500"
+                    >
+                      <option value="">No Active Plan</option>
+                      {plans.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} - ₹{p.price} ({p.durationDays} Days)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedPlanId && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">Start Date</label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          required
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block font-semibold text-zinc-400 uppercase tracking-wider">End Date</label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          required
+                          className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2">
