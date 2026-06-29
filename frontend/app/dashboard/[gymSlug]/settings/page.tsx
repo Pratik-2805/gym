@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Smartphone,
@@ -1096,7 +1095,6 @@ export default function WhatsAppSetupPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <ToastContainer theme="dark" position="bottom-right" />
       <style>{`
         :root {
           --toastify-color-dark: #27272a !important; /* zinc-800 */

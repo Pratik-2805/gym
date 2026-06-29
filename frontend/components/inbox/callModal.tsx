@@ -14,7 +14,7 @@ interface Props {
   conversationId: string;
   recipientName: string;
   recipientPhone: string;
-  
+
   // Inbound call specifics
   isInbound?: boolean;
   inboundCallId?: string;
@@ -38,11 +38,13 @@ export default function CallModal({
   const [callDuration, setCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [callId, setCallId] = useState<string | null>(inboundCallId || null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  const settingRemoteDescriptionRef = useRef(false);
 
   // Effect to reset state when modal opens
   useEffect(() => {
@@ -50,7 +52,9 @@ export default function CallModal({
     setCallStatus(isInbound ? "INCOMING_RINGING" : "INITIATING");
     setCallId(inboundCallId || null);
     setIsMuted(false);
-    
+    settingRemoteDescriptionRef.current = false;
+    setErrorMessage(null);
+
     if (!isInbound) {
       initOutboundCall();
     } else {
@@ -80,11 +84,11 @@ export default function CallModal({
 
   const connectSocket = (currentCallId: string) => {
     const socket = getSocket();
-    
+
     // We don't need to emit join-conversation here, since useChatSocket already does it, 
     // but doing it again is harmless.
     socket.emit("join-conversation", conversationId);
-    
+
     const handleCallEvent = async (eventData: any) => {
       console.log("Received whatsapp call event:", eventData);
       if (eventData.callId !== currentCallId) return;
@@ -93,15 +97,18 @@ export default function CallModal({
         case "connect":
           if (!isInbound && eventData.sdp) { // Only outbound needs to set answer from webhook
             try {
-              if (pcRef.current?.signalingState !== "stable") {
-                await pcRef.current?.setRemoteDescription({
+              const pc = pcRef.current;
+              if (pc && pc.signalingState !== "stable" && !settingRemoteDescriptionRef.current) {
+                settingRemoteDescriptionRef.current = true;
+                await pc.setRemoteDescription({
                   type: "answer",
                   sdp: eventData.sdp,
                 });
                 console.log("Remote description set successfully");
               }
-            } catch (err) {
-              console.error("Failed to set remote description:", err);
+            } catch (err: any) {
+              console.warn("Failed to set remote description:", err.message || err);
+              settingRemoteDescriptionRef.current = false;
             }
           }
           break;
@@ -110,8 +117,9 @@ export default function CallModal({
           else if (eventData.status === "ACCEPTED") setCallStatus("CONNECTED");
           else if (eventData.status === "REJECTED") {
             setCallStatus("FAILED");
-            toast.error("Call was rejected");
+            setErrorMessage("Call was rejected by the recipient.");
             endCallUI();
+            setTimeout(onClose, 3000);
           }
           break;
         case "terminate":
@@ -131,28 +139,45 @@ export default function CallModal({
 
   const getMediaAndSetupPC = async () => {
     // 1. Get Microphone
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
-    localStreamRef.current = stream;
-
-    // 2. Setup RTCPeerConnection
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    });
-    pcRef.current = pc;
-
-    // Add local tracks
-    stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-
-    // Handle remote tracks
-    pc.ontrack = (event) => {
-      if (remoteAudioRef.current && event.streams[0]) {
-        remoteAudioRef.current.srcObject = event.streams[0];
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Microphone access is not supported by your browser or connection context. Please use a secure (HTTPS) connection.");
       }
-    };
-    return pc;
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      localStreamRef.current = stream;
+
+      // 2. Setup RTCPeerConnection
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      });
+      pcRef.current = pc;
+
+      // Add local tracks
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      // Handle remote tracks
+      pc.ontrack = (event) => {
+        if (remoteAudioRef.current && event.streams[0]) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+        }
+      };
+      return pc;
+    } catch (err: any) {
+      if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        throw new Error("Microphone device not found. Please connect a microphone and try again.");
+      }
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        throw new Error("Microphone access is not allowed. Please grant microphone permissions in your browser settings to make calls.");
+      }
+      if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+        throw new Error("Microphone is already in use by another application.");
+      }
+      throw err;
+    }
   }
 
   const waitForICE = async (pc: RTCPeerConnection) => {
@@ -208,18 +233,20 @@ export default function CallModal({
       // 5. Connect Socket
       connectSocket(data.callId);
     } catch (err: any) {
-      console.error("Call initialization error:", err);
+      console.warn("Call initialization failed:", err.message || err);
       setCallStatus("FAILED");
-      toast.error(err.message || "Failed to access microphone or initiate call");
+      setErrorMessage(err.message || "Failed to access microphone or initiate call");
+      setTimeout(onClose, 3000);
     }
   };
 
   const handleAcceptInbound = async () => {
+    if (callStatus !== "INCOMING_RINGING") return;
     try {
       setCallStatus("INITIATING"); // Temporary loading state while getting mic
-      
+
       const pc = await getMediaAndSetupPC();
-      
+
       // 3. Set Remote Offer
       await pc.setRemoteDescription({ type: "offer", sdp: inboundSdp! });
 
@@ -245,9 +272,10 @@ export default function CallModal({
 
       setCallStatus("CONNECTED");
     } catch (err: any) {
-      console.error("Accept call error:", err);
+      console.warn("Accept call failed:", err.message || err);
       setCallStatus("FAILED");
-      toast.error(err.message || "Failed to accept call");
+      setErrorMessage(err.message || "Failed to accept call");
+      setTimeout(onClose, 3000);
     }
   }
 
@@ -318,41 +346,45 @@ export default function CallModal({
               <PhoneIncoming className="w-10 h-10 text-cyan-400 animate-pulse" />
             ) : (
               <Phone
-                className={`w-10 h-10 ${
-                  callStatus === "CONNECTED"
+                className={`w-10 h-10 ${callStatus === "CONNECTED"
                     ? "text-cyan-400"
                     : callStatus === "FAILED" || callStatus === "ENDED"
                       ? "text-red-500"
                       : "text-zinc-400"
-                }`}
+                  }`}
               />
             )}
-            
+
             {(callStatus === "RINGING" || callStatus === "INCOMING_RINGING") && (
-                <span className="absolute w-full h-full rounded-full border-2 border-cyan-400/50 animate-ping" />
+              <span className="absolute w-full h-full rounded-full border-2 border-cyan-400/50 animate-ping" />
             )}
           </div>
 
           <h2 className="text-xl font-bold text-white mb-1">
             {recipientName || recipientPhone}
           </h2>
-          <p className="text-sm text-zinc-400 mb-8 h-5 flex items-center justify-center">
-            {callStatus === "INCOMING_RINGING" && "Incoming Call..."}
+          <div className="text-sm text-zinc-400 mb-8 min-h-5 text-center px-4 flex flex-col items-center justify-center">
+            {callStatus === "INCOMING_RINGING" && <span>Incoming Call...</span>}
             {callStatus === "INITIATING" && (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" /> Connecting...
               </span>
             )}
-            {callStatus === "RINGING" && "Ringing..."}
+            {callStatus === "RINGING" && <span>Ringing...</span>}
             {callStatus === "CONNECTED" && (
-                <span className="text-cyan-400 font-medium">
-                  {Math.floor(callDuration / 60).toString().padStart(2, '0')}:
-                  {(callDuration % 60).toString().padStart(2, '0')}
-                </span>
+              <span className="text-cyan-400 font-medium">
+                {Math.floor(callDuration / 60).toString().padStart(2, '0')}:
+                {(callDuration % 60).toString().padStart(2, '0')}
+              </span>
             )}
-            {callStatus === "FAILED" && <span className="text-red-400">Call Failed</span>}
-            {callStatus === "ENDED" && "Call Ended"}
-          </p>
+            {callStatus === "FAILED" && (
+              <span className="text-red-400 flex flex-col items-center gap-1">
+                <span className="font-semibold text-red-500">Call Failed</span>
+                {errorMessage && <span className="text-xs text-zinc-500 max-w-[280px] mt-1">{errorMessage}</span>}
+              </span>
+            )}
+            {callStatus === "ENDED" && <span>Call Ended</span>}
+          </div>
 
           <div className="flex items-center gap-6 z-10">
             {callStatus === "INCOMING_RINGING" ? (
@@ -375,15 +407,14 @@ export default function CallModal({
                 <button
                   onClick={toggleMute}
                   disabled={callStatus !== "CONNECTED" && callStatus !== "RINGING"}
-                  className={`p-4 rounded-full transition-colors ${
-                    isMuted
+                  className={`p-4 rounded-full transition-colors ${isMuted
                       ? "bg-zinc-800 text-red-400"
                       : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                  } disabled:opacity-50`}
+                    } disabled:opacity-50`}
                 >
                   {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                 </button>
-                
+
                 <button
                   onClick={handleHangUp}
                   className="p-4 rounded-full bg-red-500 hover:bg-red-600 text-white transition-colors shadow-lg"
@@ -393,7 +424,7 @@ export default function CallModal({
               </>
             )}
           </div>
-          
+
           <audio ref={remoteAudioRef} autoPlay />
         </motion.div>
       </div>

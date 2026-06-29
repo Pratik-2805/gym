@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { connectSocket, getSocket } from '@/lib/socket';
 import CallModal from '@/components/inbox/callModal';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -206,6 +208,7 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
           inboundSdp={incomingCall.sdp}
         />
       )}
+      <ToastContainer theme="dark" position="bottom-right" />
     </div>
   );
 }

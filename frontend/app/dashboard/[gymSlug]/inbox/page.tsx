@@ -55,13 +55,13 @@ const mapApiConversation = (c: any): Conversation => {
     lastMessage: c.lastMessage ? c.lastMessage.content : "",
     lastActivity: c.lastMessage
       ? new Date(c.lastMessage.createdAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+      })
       : new Date(c.lastMessageAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     lastMessageDirection: c.lastMessage?.direction,
     lastMessageStatus: c.lastMessage?.status,
     unreadCount,
@@ -398,7 +398,7 @@ function ChatArea({
           try {
             const errData = await res.json();
             errMsg = errData.error || errData.message || errMsg;
-          } catch (e) {}
+          } catch (e) { }
           throw new Error(errMsg);
         }
       }
@@ -585,7 +585,7 @@ function ChatArea({
                 try {
                   const errData = await res.json();
                   errMsg = errData.error || errData.message || errMsg;
-                } catch (e) {}
+                } catch (e) { }
                 throw new Error(errMsg);
               }
             }
@@ -798,27 +798,27 @@ export default function InboxPage() {
         prev.map((c) =>
           c.id === id
             ? {
-                ...c,
-                memberName: (() => {
-                  const name = res.data.member?.name;
-                  const whatsapp = res.data.member?.whatsappName;
-                  const phone = res.data.member?.phone;
-                  if (!name) return whatsapp || phone;
-                  const cleanName = name.replace(/[+\-\s()]/g, "");
-                  const isPhoneOnly = /^\d+$/.test(cleanName);
-                  if (isPhoneOnly && whatsapp) {
-                    return whatsapp;
-                  }
-                  return name;
-                })(),
-                sessionStarted: res.data.sessionStarted,
-                sessionActive: res.data.sessionActive,
-                sessionExpiresAt: res.data.sessionExpiresAt,
-                isBlocked: !!res.data.member?.blockedAt,
-                isMember: res.data.member?.isMember ?? false,
-                planName: res.data.member?.planName ?? null,
-                callPermissionStatus: res.data.member?.callPermissionStatus ?? c.callPermissionStatus,
-              }
+              ...c,
+              memberName: (() => {
+                const name = res.data.member?.name;
+                const whatsapp = res.data.member?.whatsappName;
+                const phone = res.data.member?.phone;
+                if (!name) return whatsapp || phone;
+                const cleanName = name.replace(/[+\-\s()]/g, "");
+                const isPhoneOnly = /^\d+$/.test(cleanName);
+                if (isPhoneOnly && whatsapp) {
+                  return whatsapp;
+                }
+                return name;
+              })(),
+              sessionStarted: res.data.sessionStarted,
+              sessionActive: res.data.sessionActive,
+              sessionExpiresAt: res.data.sessionExpiresAt,
+              isBlocked: !!res.data.member?.blockedAt,
+              isMember: res.data.member?.isMember ?? false,
+              planName: res.data.member?.planName ?? null,
+              callPermissionStatus: res.data.member?.callPermissionStatus ?? c.callPermissionStatus,
+            }
             : c,
         ),
       );
@@ -929,7 +929,7 @@ export default function InboxPage() {
           <div className="h-full flex items-center justify-center bg-zinc-950 relative overflow-hidden">
             {/* Soft decorative glow behind the placeholder */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-cyan-500/5 blur-[80px] pointer-events-none" />
-            
+
             <div className="text-center px-4 max-w-sm z-10 relative">
               <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-xl">
                 <MessageSquareIcon className="w-10 h-10 sm:w-12 sm:h-12 text-cyan-400" />

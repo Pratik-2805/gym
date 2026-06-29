@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -459,7 +458,6 @@ export default function MessageTemplatesPage() {
 
   return (
     <div className="space-y-8 pb-16">
-      <ToastContainer theme="dark" toastClassName="border border-zinc-850 bg-zinc-950 text-white rounded-xl text-xs font-semibold" />
 
       {/* Main Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

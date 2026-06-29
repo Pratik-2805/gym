@@ -231,8 +231,8 @@ router.post("/", async (req, res) => {
           const interactive = msg.interactive;
           if (interactive?.type === "call_permission_reply") {
             const reply = interactive.call_permission_reply;
-            text = reply.response === "accept" 
-              ? "✅ Call permission granted by customer" 
+            text = reply.response === "accept"
+              ? "✅ Call permission granted by customer"
               : "❌ Call permission denied by customer";
           } else {
             text =
@@ -339,7 +339,7 @@ router.post("/", async (req, res) => {
                 where: { id: member.id },
                 data: updateData,
               });
-              
+
               if (shouldEmitMemberUpdate) {
                 try {
                   const io = (await import("../socket.js")).getIO();
@@ -389,7 +389,7 @@ router.post("/", async (req, res) => {
                     mimeType = parsed.mimeType;
                     caption = parsed.caption;
                   }
-                } catch (e) {}
+                } catch (e) { }
               }
 
               const mappedMsg = {
@@ -452,6 +452,31 @@ router.post("/", async (req, res) => {
           console.log(
             `💾 Updated status in DB for message ${messageId} to ${metaState.toUpperCase()}`,
           );
+
+          // If this was a call permission request and it failed, reset the member's status
+          if (metaState.toUpperCase() === "FAILED" && message.text === "📞 [Call Permission Request]") {
+            const member = await prisma.member.findFirst({
+              where: { gymId: gym.id, phone: message.recipientPhone },
+            });
+            if (member) {
+              const updatedMember = await prisma.member.update({
+                where: { id: member.id },
+                data: {
+                  callPermissionStatus: "UNKNOWN",
+                  callPermissionUpdatedAt: new Date(),
+                },
+              });
+              console.log(`💾 Reset callPermissionStatus to UNKNOWN for member ${member.id} due to failed template delivery`);
+
+              // Broadcast updated member info
+              try {
+                const io = getIO();
+                io.to(`gym:${gym.id}`).emit("member:updated", updatedMember);
+              } catch (wsErr) {
+                console.error("❌ Failed to emit member:updated status event:", wsErr.message);
+              }
+            }
+          }
 
           // Log raw event for auditing since the message exists
           await prisma.whatsAppEvent.create({
@@ -516,27 +541,27 @@ router.post("/", async (req, res) => {
       for (const callObj of value.calls) {
         const callId = callObj.id;
         const event = callObj.event || (callObj.session ? "connect" : "unknown");
-        
+
         console.log(`📞 Call ID: ${callId} -> Event: "${event}"`);
 
         // Find the corresponding member based on the phone number
         // If from === gym's number, then it's an outbound call and the member is `to`.
         // If to === gym's number, then it's an inbound call and the member is `from`.
-        const gymPhone = gym.whatsappDisplayPhoneNumber?.replace(/\D/g, '') || callObj.from; 
+        const gymPhone = gym.whatsappDisplayPhoneNumber?.replace(/\D/g, '') || callObj.from;
         // Best effort: if 'from' is the gym's phone number (which we can check by matching metadata display_phone_number), then member is 'to'
         let memberPhone = callObj.from;
-        
+
         // Use the metadata display_phone_number from the webhook if available to identify the gym's number
         const metadataDisplayPhone = value.metadata?.display_phone_number?.replace(/\D/g, '');
         if (metadataDisplayPhone && callObj.from === metadataDisplayPhone) {
-            memberPhone = callObj.to;
+          memberPhone = callObj.to;
         } else if (callObj.direction === "BUSINESS_INITIATED") {
-            memberPhone = callObj.to;
+          memberPhone = callObj.to;
         }
 
         let conversationId = null;
         let memberName = memberPhone;
-        
+
         if (memberPhone && gym) {
           const member = await prisma.member.findFirst({
             where: { gymId: gym.id, phone: memberPhone },
@@ -579,7 +604,7 @@ router.post("/", async (req, res) => {
         if (statusObj.type === "call") {
           const callId = statusObj.id;
           const metaState = statusObj.status; // RINGING | ACCEPTED | REJECTED
-          
+
           console.log(`📞 Call Status ID: ${callId} -> State: "${metaState}"`);
 
           const recipientId = statusObj.recipient_id;
