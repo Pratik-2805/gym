@@ -533,8 +533,8 @@ export default function MessageBubble({
           className={`group relative shadow-sm overflow-hidden flex flex-col p-0
           ${
             msg.sender === "executive"
-              ? "bg-bubble-outbound-bg text-bubble-outbound-text rounded-tr-none rounded-2xl rounded-br-2xl"
-              : "bg-bubble-inbound-bg text-bubble-inbound-text rounded-tl-none rounded-2xl rounded-bl-2xl border border-zinc-200/50 dark:border-zinc-800/50"
+              ? "bg-bubble-outbound-bg text-bubble-outbound-text rounded-tr-none rounded-lg rounded-br-lg"
+              : "bg-bubble-inbound-bg text-bubble-inbound-text rounded-tl-none rounded-lg rounded-bl-lg border border-zinc-200/50 dark:border-zinc-800/50"
           }
           max-w-full`}
         >
@@ -859,7 +859,7 @@ export default function MessageBubble({
                   <div className="text-xs font-semibold text-cyan-400 mb-1">
                     {repliedMessage.sender === "executive"
                       ? "You"
-                      : conversation.companyName}
+                      : conversation.memberName}
                   </div>
                   <div className="text-xs text-zinc-400 line-clamp-2">
                     {repliedMessage.text ||

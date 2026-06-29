@@ -63,6 +63,21 @@ router.get("/", async (req, res) => {
       return res.status(404).json({ error: "Gym not found" });
     }
 
+    // Auto-reset stuck PENDING call permissions (older than 5 minutes)
+    await prisma.member.updateMany({
+      where: {
+        gymId: gym.id,
+        callPermissionStatus: "PENDING",
+        callPermissionRequestedAt: {
+          lt: new Date(Date.now() - 5 * 60 * 1000)
+        }
+      },
+      data: {
+        callPermissionStatus: "UNKNOWN",
+        callPermissionUpdatedAt: new Date(),
+      }
+    });
+
     const members = await prisma.member.findMany({
       where: { gymId: gym.id }
     });
@@ -91,6 +106,18 @@ router.get("/", async (req, res) => {
           }
         });
 
+        // Check for active membership
+        const activeMembership = await prisma.membership.findFirst({
+          where: {
+            memberId: member.id,
+            status: "ACTIVE",
+            endDate: { gte: new Date() }
+          },
+          include: {
+            plan: true
+          }
+        });
+
         const parsedText = lastMessage ? parseMessageText(lastMessage.text) : null;
 
         // Compute WhatsApp 24-hour session window details
@@ -105,32 +132,36 @@ router.get("/", async (req, res) => {
 
         const now = new Date();
         const sessionStarted = !!lastInbound;
-        const sessionExpiresAt = lastInbound 
-          ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000) 
+        const sessionExpiresAt = lastInbound
+          ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000)
           : null;
         const sessionActive = sessionExpiresAt ? sessionExpiresAt > now : false;
 
         return {
           id: member.id,
-          name: member.name,
+          name: member.memberName,
+          whatsappName: member.whatsappName,
           phone: member.phone,
           isBotDisabled: member.isBotDisabled,
           notes: member.notes,
           isBlocked: !!member.blockedAt,
+          isMember: !!activeMembership,
+          planName: activeMembership ? activeMembership.plan.name : null,
           lastMessage: lastMessage
             ? {
-                id: lastMessage.id,
-                content: parsedText.mediaUrl ? (parsedText.mimeType?.startsWith("image/") ? "📷 Photo" : parsedText.mimeType?.startsWith("video/") ? "🎥 Video" : "📄 Document") : parsedText.content,
-                direction: lastMessage.direction.toLowerCase(),
-                status: lastMessage.status.toLowerCase(),
-                createdAt: lastMessage.createdAt
-              }
+              id: lastMessage.id,
+              content: parsedText.mediaUrl ? (parsedText.mimeType?.startsWith("image/") ? "📷 Photo" : parsedText.mimeType?.startsWith("video/") ? "🎥 Video" : "📄 Document") : parsedText.content,
+              direction: lastMessage.direction.toLowerCase(),
+              status: lastMessage.status.toLowerCase(),
+              createdAt: lastMessage.createdAt
+            }
             : null,
           lastMessageAt: lastMessage ? lastMessage.createdAt : member.updatedAt,
           unreadCount,
           sessionStarted,
           sessionActive,
-          sessionExpiresAt
+          sessionExpiresAt,
+          callPermissionStatus: member.callPermissionStatus
         };
       })
     );
@@ -165,6 +196,21 @@ router.get("/:memberId", async (req, res) => {
       return res.status(404).json({ error: "Gym not found" });
     }
 
+    // Auto-reset stuck PENDING call permissions (older than 5 minutes)
+    await prisma.member.updateMany({
+      where: {
+        gymId: gym.id,
+        callPermissionStatus: "PENDING",
+        callPermissionRequestedAt: {
+          lt: new Date(Date.now() - 5 * 60 * 1000)
+        }
+      },
+      data: {
+        callPermissionStatus: "UNKNOWN",
+        callPermissionUpdatedAt: new Date(),
+      }
+    });
+
     const member = await prisma.member.findUnique({
       where: { id: memberId }
     });
@@ -172,6 +218,17 @@ router.get("/:memberId", async (req, res) => {
     if (!member || member.gymId !== gym.id) {
       return res.status(404).json({ error: "Member not found" });
     }
+
+    const activeMembership = await prisma.membership.findFirst({
+      where: {
+        memberId: member.id,
+        status: "ACTIVE",
+        endDate: { gte: new Date() }
+      },
+      include: {
+        plan: true
+      }
+    });
 
     const messages = await prisma.whatsAppMessage.findMany({
       where: {
@@ -212,8 +269,8 @@ router.get("/:memberId", async (req, res) => {
 
     const now = new Date();
     const sessionStarted = !!lastInbound;
-    const sessionExpiresAt = lastInbound 
-      ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000) 
+    const sessionExpiresAt = lastInbound
+      ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000)
       : null;
     const sessionActive = sessionExpiresAt ? sessionExpiresAt > now : false;
 
@@ -221,11 +278,15 @@ router.get("/:memberId", async (req, res) => {
       conversationId: member.id,
       member: {
         id: member.id,
-        name: member.name,
+        name: member.memberName,
+        whatsappName: member.whatsappName,
         phone: member.phone,
         isBotDisabled: member.isBotDisabled,
         notes: member.notes,
-        blockedAt: member.blockedAt
+        blockedAt: member.blockedAt,
+        isMember: !!activeMembership,
+        planName: activeMembership ? activeMembership.plan.name : null,
+        callPermissionStatus: member.callPermissionStatus
       },
       sessionStarted,
       sessionActive,
@@ -494,8 +555,8 @@ router.post("/:memberId/toggle-bot", async (req, res) => {
       data: {
         action: isBotDisabled ? "BOT_TAKEOVER_START" : "BOT_TAKEOVER_STOP",
         details: isBotDisabled
-          ? `Human took over conversation with member ${member.name} (${member.phone}). Bot paused.`
-          : `Chatbot resumed control for member ${member.name} (${member.phone}).`,
+          ? `Human took over conversation with member ${member.memberName} (${member.phone}). Bot paused.`
+          : `Chatbot resumed control for member ${member.memberName} (${member.phone}).`,
         gymId: gym.id,
         userId: req.user?.userId || null
       }
@@ -626,7 +687,7 @@ router.post("/check-number", async (req, res) => {
         lead: {
           id: existingMember.id,
           phoneNumber: existingMember.phone,
-          companyName: existingMember.name
+          memberName: existingMember.memberName
         }
       });
     }
@@ -649,7 +710,7 @@ router.post("/check-number", async (req, res) => {
  */
 router.post("/create-conversation", async (req, res) => {
   const { gymSlug } = req.params;
-  const { phoneNumber, companyName } = req.body;
+  const { phoneNumber, memberName } = req.body;
 
   if (!phoneNumber) {
     return res.status(400).json({ error: "Phone number is required" });
@@ -681,14 +742,14 @@ router.post("/create-conversation", async (req, res) => {
         data: {
           gymId: gym.id,
           phone: formattedNumber,
-          name: companyName || formattedNumber
+          memberName: memberName || formattedNumber
         }
       });
 
       await prisma.auditLog.create({
         data: {
           action: "MEMBER_CREATE",
-          details: `Member ${member.name} (${formattedNumber}) created via start conversation in inbox.`,
+          details: `Member ${member.memberName} (${formattedNumber}) created via start conversation in inbox.`,
           gymId: gym.id,
           userId: req.user?.userId || null
         }
@@ -708,7 +769,7 @@ router.post("/create-conversation", async (req, res) => {
       lead: {
         id: member.id,
         phoneNumber: member.phone,
-        companyName: member.name
+        memberName: member.memberName
       }
     });
   } catch (err) {
@@ -1174,7 +1235,7 @@ router.post("/:memberId/send-media", upload.single("file"), async (req, res) => 
 
   // Security check: Block executable/script files that could harm the platform or recipient
   const harmfulExtensions = [
-    ".exe", ".msi", ".bat", ".cmd", ".sh", ".vbs", ".js", ".scr", ".pif", ".cpl", 
+    ".exe", ".msi", ".bat", ".cmd", ".sh", ".vbs", ".js", ".scr", ".pif", ".cpl",
     ".wsf", ".jar", ".com", ".gadget", ".vb", ".vbe", ".jse", ".lnk", ".reg"
   ];
   const ext = path.extname(file.originalname || "").toLowerCase();
@@ -1244,10 +1305,10 @@ router.post("/:memberId/send-media", upload.single("file"), async (req, res) => 
     const mediaType = file.mimetype.startsWith("image/")
       ? "image"
       : file.mimetype.startsWith("video/")
-      ? "video"
-      : file.mimetype.startsWith("audio/")
-      ? "audio"
-      : "document";
+        ? "video"
+        : file.mimetype.startsWith("audio/")
+          ? "audio"
+          : "document";
 
     const sendPayload = {
       messaging_product: "whatsapp",

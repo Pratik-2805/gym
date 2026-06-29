@@ -1,5 +1,6 @@
 import { Router } from "express";
 import prisma from "../prisma.js";
+import { getIO } from "../socket.js";
 
 const router = Router({ mergeParams: true });
 
@@ -33,7 +34,13 @@ router.get("/", async (req, res) => {
       orderBy: { createdAt: "desc" }
     });
 
-    res.json({ members });
+    // Map memberName to name for frontend compatibility
+    const mappedMembers = members.map(m => ({
+      ...m,
+      name: m.memberName
+    }));
+
+    res.json({ members: mappedMembers });
   } catch (err) {
     console.error("❌ [Members GET] Error:", err);
     res.status(500).json({ error: "Internal Server Error" });
@@ -47,15 +54,18 @@ router.get("/", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   const { gymSlug } = req.params;
+  const { name, memberName, phone, email, address, dob, emergencyContact, notes } = req.body;
+  const actualName = name || memberName;
   const { name, phone, email, address, dob, emergencyContact, notes, planId, startDate, endDate } = req.body;
 
-  if (!name || !phone) {
+  if (!actualName || !phone) {
     return res.status(400).json({ error: "Name and Phone number are required" });
   }
 
   try {
     const gym = await prisma.gym.findUnique({
       where: { slug: gymSlug.toLowerCase() },
+      select: { id: true, name: true }
       select: { id: true, name: true }
     });
 
@@ -80,6 +90,17 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "A member with this phone number is already registered." });
     }
 
+    const newMember = await prisma.member.create({
+      data: {
+        gymId: gym.id,
+        memberName: actualName,
+        phone: formattedPhone,
+        email: email || null,
+        address: address || null,
+        dob: dob ? new Date(dob) : null,
+        emergencyContact: emergencyContact || null,
+        notes: notes || null
+      },
     const memberData = {
       gymId: gym.id,
       name,
@@ -125,16 +146,35 @@ router.post("/", async (req, res) => {
       },
     });
 
+    // Queue welcome template message for the new member
+    await prisma.notification.create({
+      data: {
+        gymId: gym.id,
+        memberId: newMember.id,
+        recipientPhone: formattedPhone,
+        title: `TEMPLATE:welcome_member:${actualName},${gym.name}`,
+        message: `Welcome ${actualName} to ${gym.name}! Your account has been registered successfully.`,
+        type: "ACTIVATION",
+        status: "PENDING",
+      },
+    });
+
     await prisma.auditLog.create({
       data: {
         action: "MEMBER_CREATE",
-        details: `Member ${name} (${formattedPhone}) registered manually.`,
+        details: `Member ${actualName} (${formattedPhone}) registered manually.`,
         gymId: gym.id,
         userId: req.user?.userId || null
       }
     });
 
-    res.status(201).json({ success: true, member: newMember });
+    // Map memberName to name for frontend compatibility
+    const mappedMember = {
+      ...newMember,
+      name: newMember.memberName
+    };
+
+    res.status(201).json({ success: true, member: mappedMember });
   } catch (err) {
     console.error("❌ [Members POST] Error:", err);
     res.status(500).json({ error: "Internal Server Error" });
