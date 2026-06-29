@@ -942,44 +942,59 @@ export default function MessageTemplatesPage() {
                     </div>
 
                     {/* Smartphone Frame Mockup Wrapper */}
-                    <div className="relative mx-auto w-[290px] h-[520px] rounded-[38px] border-[10px] border-zinc-800 bg-wa-chat-bg shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-1 ring-zinc-700/50">
-                      {/* Speaker Notch / Dynamic Island */}
-                      <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-4.5 bg-zinc-850 rounded-full z-30 flex items-center justify-center border border-zinc-800/40">
-                        <div className="w-1.5 h-1.5 bg-zinc-900 rounded-full ml-1.5" />
-                        <div className="w-8 h-1 bg-zinc-800/60 rounded-full ml-3" />
-                      </div>
-
-                      {/* Camera Lens Indicator */}
-                      <div className="absolute top-2.5 right-6 w-2 h-2 bg-zinc-900 rounded-full z-30" />
+                    <div className="relative mx-auto w-[290px] h-[520px] rounded-[44px] border-[6px] border-black bg-wa-chat-bg shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-2 ring-zinc-800">
+                      {/* iPhone Notch */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-4.5 bg-black rounded-b-xl z-30" />
 
                       {/* Screen Content Wrapper */}
-                      <div className="flex-1 flex flex-col justify-between overflow-hidden relative pt-7 pb-4">
-                        {/* WhatsApp Header Mockup */}
-                        <div className="bg-zinc-900 px-3.5 py-2.5 flex items-center justify-between border-b border-zinc-800 shrink-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-zinc-400 text-xs cursor-pointer select-none">←</span>
-                            <div className="w-6.5 h-6.5 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-[10px]">
-                              <FileText className="w-3.5 h-3.5 text-white" />
-                            </div>
-                            <div>
-                              <span className="block text-[10px] font-bold text-zinc-100 leading-tight">Gym Member</span>
-                              <span className="block text-[8px] text-emerald-400 leading-tight font-semibold">online</span>
+                      <div className="flex-1 flex flex-col justify-between overflow-hidden relative pt-0 pb-1.5">
+                        <div className="flex flex-col shrink-0">
+                          {/* Status Bar */}
+                          <div className="h-6 bg-zinc-900 px-5 pt-1.5 flex items-center justify-between text-white text-[9px] font-medium z-20 select-none">
+                            <span>10:37</span>
+                            <div className="flex items-center gap-1.5">
+                              <svg className="w-2 h-2 fill-current opacity-60" viewBox="0 0 24 24">
+                                <path d="M2 22h20V2z"/>
+                              </svg>
+                              <svg className="w-2.2 h-2.2 fill-current opacity-60" viewBox="0 0 24 24">
+                                <path d="M12 21l-12-12c4.4-4.4 11.6-4.4 16 0z"/>
+                              </svg>
+                              <div className="w-3 h-1.8 border border-white/60 rounded-[2.5px] p-[0.5px] flex items-center">
+                                <div className="w-full h-full bg-white/60 rounded-[0.5px]" />
+                              </div>
                             </div>
                           </div>
-                          <div className="flex gap-2 text-zinc-400 text-[9px] select-none">
-                            <span>📞</span>
-                            <span>⋮</span>
+
+                          {/* WhatsApp Header Mockup */}
+                          <div className="bg-zinc-900 px-3.5 py-2.5 flex items-center justify-between text-white border-b border-zinc-800 shrink-0 shadow-sm relative z-10">
+                            <div className="flex items-center gap-2">
+                              <span className="text-zinc-400 text-xs cursor-pointer select-none">←</span>
+                              <div className="w-6.5 h-6.5 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-[10px]">
+                                <FileText className="w-3.5 h-3.5 text-white" />
+                              </div>
+                              <div>
+                                <span className="block text-[10px] font-bold text-zinc-100 leading-tight">Gym Member</span>
+                                <span className="block text-[8px] text-emerald-400 leading-tight font-semibold">online</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 text-zinc-400 text-[9px] select-none">
+                              <span>📞</span>
+                              <span>⋮</span>
+                            </div>
                           </div>
                         </div>
 
                         {/* Chat Area Mockup */}
                         <div className="flex-1 p-3.5 space-y-3 relative bg-wa-chat-bg overflow-y-auto flex flex-col justify-end">
-                          {/* Background WhatsApp Doodle grid effect */}
-                          <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
-                          {/* Chat Message Bubble (Outbound) */}
-                          <div className="relative self-end bg-bubble-outbound-bg text-bubble-outbound-text rounded-2xl rounded-tr-none w-fit max-w-[92%] shadow-md border border-bubble-outbound-bg z-10 flex flex-col text-xs leading-relaxed overflow-hidden">
+                          {/* Background WhatsApp Doodle image effect */}
+                          <div className="absolute inset-0 bg-[url('/chat-bg.png')] bg-repeat bg-center opacity-30 dark:opacity-[0.5] pointer-events-none" />
+                          {/* Chat Message Bubble (Outbound) Wrapper */}
+                          <div className="relative self-end w-fit max-w-[92%] z-10 flex flex-col">
                             {/* WhatsApp Chat Bubble Tail (right side) */}
                             <div className="absolute top-0 -right-1.5 w-0 h-0 border-t-[8px] border-t-bubble-outbound-bg border-r-[8px] border-r-transparent" />
+                            
+                            {/* Inner Bubble Container */}
+                            <div className="bg-bubble-outbound-bg text-bubble-outbound-text rounded-lg rounded-tr-none shadow-sm border border-bubble-outbound-bg overflow-hidden flex flex-col text-xs leading-relaxed">
                             
                             {/* Header element (Full Width Media) */}
                             {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'IMAGE' && 
@@ -1062,8 +1077,25 @@ export default function MessageTemplatesPage() {
                         </div>
                       </div>
 
+                        {/* WhatsApp Bottom Input Bar Mockup */}
+                        <div className="px-2.5 py-2 bg-zinc-900 border-t border-zinc-800/80 flex items-center gap-2 shrink-0 select-none z-10">
+                          <div className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-zinc-500 text-sm">☺</span>
+                              <span className="text-zinc-600 text-[10px] font-sans">Type a message</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-zinc-500">
+                              <span className="text-xs rotate-45 inline-block">📎</span>
+                            </div>
+                          </div>
+                          <div className="w-7 h-7 rounded-full bg-cyan-600 flex items-center justify-center text-white text-[11px] shadow-sm shrink-0">
+                            <span>🎤</span>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* iPhone Home Indicator bar at the bottom */}
-                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-24 h-1 bg-zinc-700/60 rounded-full z-30" />
+                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-20 h-0.8 bg-black/40 rounded-full z-30" />
                     </div>
                   </div>
                 </div>
@@ -1425,44 +1457,59 @@ export default function MessageTemplatesPage() {
                     </div>
 
                     {/* Smartphone Frame Mockup Wrapper */}
-                    <div className="relative mx-auto w-[270px] h-[480px] rounded-[38px] border-[10px] border-zinc-800 bg-wa-chat-bg shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-1 ring-zinc-700/50">
-                      {/* Speaker Notch / Dynamic Island */}
-                      <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-4.5 bg-zinc-850 rounded-full z-30 flex items-center justify-center border border-zinc-800/40">
-                        <div className="w-1.5 h-1.5 bg-zinc-900 rounded-full ml-1.5" />
-                        <div className="w-8 h-1 bg-zinc-800/60 rounded-full ml-3" />
-                      </div>
-
-                      {/* Camera Lens Indicator */}
-                      <div className="absolute top-2.5 right-6 w-2 h-2 bg-zinc-900 rounded-full z-30" />
+                    <div className="relative mx-auto w-[270px] h-[480px] rounded-[44px] border-[6px] border-black bg-wa-chat-bg shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-2 ring-zinc-800">
+                      {/* iPhone Notch */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-4.5 bg-black rounded-b-xl z-30" />
 
                       {/* Screen Content Wrapper */}
-                      <div className="flex-1 flex flex-col justify-between overflow-hidden relative pt-7 pb-4">
-                        {/* WhatsApp Header Mockup */}
-                        <div className="bg-zinc-900 px-3.5 py-2.5 flex items-center justify-between border-b border-zinc-800 shrink-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-zinc-400 text-xs cursor-pointer select-none">←</span>
-                            <div className="w-6.5 h-6.5 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-[10px]">
-                              <FileText className="w-3.5 h-3.5 text-white" />
-                            </div>
-                            <div>
-                              <span className="block text-[10px] font-bold text-zinc-100 leading-tight">Gym Member</span>
-                              <span className="block text-[8px] text-emerald-400 leading-tight font-semibold">online</span>
+                      <div className="flex-1 flex flex-col justify-between overflow-hidden relative pt-0 pb-1.5">
+                        <div className="flex flex-col shrink-0">
+                          {/* Status Bar */}
+                          <div className="h-6 bg-zinc-900 px-5 pt-1.5 flex items-center justify-between text-white text-[9px] font-medium z-20 select-none">
+                            <span>10:37</span>
+                            <div className="flex items-center gap-1.5">
+                              <svg className="w-2 h-2 fill-current opacity-65" viewBox="0 0 24 24">
+                                <path d="M2 22h20V2z"/>
+                              </svg>
+                              <svg className="w-2.2 h-2.2 fill-current opacity-65" viewBox="0 0 24 24">
+                                <path d="M12 21l-12-12c4.4-4.4 11.6-4.4 16 0z"/>
+                              </svg>
+                              <div className="w-3 h-1.8 border border-white/60 rounded-[2.5px] p-[0.5px] flex items-center">
+                                <div className="w-full h-full bg-white/60 rounded-[0.5px]" />
+                              </div>
                             </div>
                           </div>
-                          <div className="flex gap-2 text-zinc-400 text-[9px] select-none">
-                            <span>📞</span>
-                            <span>⋮</span>
+
+                          {/* WhatsApp Header Mockup */}
+                          <div className="bg-zinc-900 px-3.5 py-2.5 flex items-center justify-between text-white border-b border-zinc-800 shrink-0 shadow-sm relative z-10">
+                            <div className="flex items-center gap-2">
+                              <span className="text-zinc-400 text-xs cursor-pointer select-none">←</span>
+                              <div className="w-6.5 h-6.5 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-[10px]">
+                                <FileText className="w-3.5 h-3.5 text-white" />
+                              </div>
+                              <div>
+                                <span className="block text-[10px] font-bold text-zinc-100 leading-tight">Gym Member</span>
+                                <span className="block text-[8px] text-emerald-400 leading-tight font-semibold">online</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 text-zinc-400 text-[9px] select-none">
+                              <span>📞</span>
+                              <span>⋮</span>
+                            </div>
                           </div>
                         </div>
 
                         {/* Chat Area Mockup */}
-                        <div className="flex-1 p-3.5 space-y-3 relative bg-wa-chat-bg overflow-y-auto flex flex-col justify-end font-sans">
-                          {/* Background WhatsApp Doodle grid effect */}
-                          <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
-                          {/* Chat Message Bubble (Outbound) */}
-                          <div className="relative self-end bg-bubble-outbound-bg text-bubble-outbound-text rounded-2xl rounded-tr-none w-fit max-w-[92%] shadow-md border border-bubble-outbound-bg z-10 flex flex-col text-xs leading-relaxed overflow-hidden">
+                        <div className="flex-1 p-3.5 space-y-3 relative bg-wa-chat-bg overflow-y-auto flex flex-col justify-end">
+                          {/* Background WhatsApp Doodle image effect */}
+                          <div className="absolute inset-0 bg-[url('/chat-bg.png')] bg-repeat bg-center opacity-30 dark:opacity-[0.5] pointer-events-none" />
+                          {/* Chat Message Bubble (Outbound) Wrapper */}
+                          <div className="relative self-end w-fit max-w-[92%] z-10 flex flex-col">
                             {/* WhatsApp Chat Bubble Tail (right side) */}
                             <div className="absolute top-0 -right-1.5 w-0 h-0 border-t-[8px] border-t-bubble-outbound-bg border-r-[8px] border-r-transparent" />
+                            
+                            {/* Inner Bubble Container */}
+                            <div className="bg-bubble-outbound-bg text-bubble-outbound-text rounded-lg rounded-tr-none shadow-md border border-bubble-outbound-bg overflow-hidden flex flex-col text-xs leading-relaxed">
                             
                             {/* Header element (Full Width Media) */}
                             {formHeaderType === 'IMAGE' && formHeaderPreviewUrl ? (
@@ -1519,7 +1566,7 @@ export default function MessageTemplatesPage() {
 
                             {/* Integrated Buttons listing inside outbound bubble */}
                             {formButtons.length > 0 && (
-                              <div className="border-t border-wa-chat-divider flex flex-col">
+                              <div className="border-t border-wa-chat-divider flex flex-col bg-[#1f2c34]/50 dark:bg-black/20">
                                 {formButtons.map((btn) => (
                                   <div
                                     key={btn.id}
@@ -1537,8 +1584,25 @@ export default function MessageTemplatesPage() {
                         </div>
                       </div>
 
+                        {/* WhatsApp Bottom Input Bar Mockup */}
+                        <div className="px-2.5 py-2 bg-zinc-900 border-t border-zinc-800/80 flex items-center gap-2 shrink-0 select-none z-10">
+                          <div className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-zinc-500 text-sm">☺</span>
+                              <span className="text-zinc-650 text-[10px] font-sans">Type a message</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-zinc-500">
+                              <span className="text-xs rotate-45 inline-block">📎</span>
+                            </div>
+                          </div>
+                          <div className="w-7 h-7 rounded-full bg-cyan-600 flex items-center justify-center text-white text-[11px] shadow-sm shrink-0">
+                            <span>🎤</span>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* iPhone Home Indicator bar at the bottom */}
-                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-24 h-1 bg-zinc-700/60 rounded-full z-30" />
+                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-20 h-0.8 bg-black/40 rounded-full z-30" />
                     </div>
                   </div>
 
@@ -1605,14 +1669,17 @@ function renderComponentSummary(componentsJson: any): React.ReactNode {
 
   return (
     <div className="bg-wa-chat-bg rounded-xl p-3.5 border border-black/20 ring-1 ring-black/10 relative overflow-hidden font-sans select-none h-[175px] max-h-[175px] flex flex-col justify-start transition-all duration-300">
-      {/* Background WhatsApp Doodle grid effect */}
-      <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
+      {/* Background WhatsApp Doodle image effect */}
+      <div className="absolute inset-0 bg-[url('/chat-bg.png')] bg-repeat bg-center opacity-30 dark:opacity-[0.5] pointer-events-none" />
       {/* Outer wrapper representing the chat view */}
-      <div className="flex flex-col items-end w-full overflow-y-auto z-10 pl-1">
-        {/* Message bubble (Outbound) */}
-        <div className="w-fit max-w-[90%] bg-bubble-outbound-bg text-bubble-outbound-text rounded-2xl rounded-tr-none shadow-md relative text-[11px] leading-relaxed transition-all duration-300 self-end border border-bubble-outbound-bg overflow-hidden flex flex-col">
+      <div className="flex flex-col items-end w-full overflow-y-auto z-10 pl-1 pr-1.5">
+        {/* Message bubble (Outbound) Wrapper */}
+        <div className="relative w-fit max-w-[90%] z-10 flex flex-col self-end">
           {/* WhatsApp Chat Bubble Tail (right side) */}
           <div className="absolute top-0 -right-1.5 w-0 h-0 border-t-[8px] border-t-bubble-outbound-bg border-r-[8px] border-r-transparent transition-all duration-300" />
+          
+          {/* Inner Bubble Container */}
+          <div className="bg-bubble-outbound-bg text-bubble-outbound-text rounded-lg rounded-tr-none shadow-md relative text-[11px] leading-relaxed transition-all duration-300 border border-bubble-outbound-bg overflow-hidden flex flex-col">
           
           {/* Bubble content wrapper (for padding) */}
           <div className="p-2.5 flex flex-col">
@@ -1657,6 +1724,7 @@ function renderComponentSummary(componentsJson: any): React.ReactNode {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
