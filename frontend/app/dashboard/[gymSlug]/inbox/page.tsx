@@ -99,13 +99,22 @@ const mapDbTemplateToFrontend = (dbTpl: any): Template => {
   let mediaList: any[] = [];
   if (headerComp && ["IMAGE", "VIDEO", "DOCUMENT"].includes(headerComp.format)) {
     const fileInfo = headerComp.example;
-    if (fileInfo && fileInfo.local_filename) {
-      mediaList.push({
-        id: dbTpl.id,
-        mediaType: headerComp.format,
-        s3Url: `/uploads/templates/${fileInfo.local_filename}`,
-        language: dbTpl.language,
-      });
+    if (fileInfo) {
+      if (fileInfo.local_filename) {
+        mediaList.push({
+          id: dbTpl.id,
+          mediaType: headerComp.format,
+          s3Url: `/uploads/templates/${fileInfo.local_filename}`,
+          language: dbTpl.language,
+        });
+      } else if (Array.isArray(fileInfo.header_handle) && fileInfo.header_handle[0]) {
+        mediaList.push({
+          id: dbTpl.id,
+          mediaType: headerComp.format,
+          s3Url: fileInfo.header_handle[0],
+          language: dbTpl.language,
+        });
+      }
     }
   }
 

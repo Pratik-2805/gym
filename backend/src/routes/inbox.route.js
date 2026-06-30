@@ -1125,6 +1125,59 @@ router.post("/:memberId/send-template", async (req, res) => {
             console.log(`✅ [Send Template] Header media uploaded. ID: ${mediaId}`);
           }
         }
+      } else if (fileInfo && Array.isArray(fileInfo.header_handle) && fileInfo.header_handle.length > 0) {
+        const handleUrl = fileInfo.header_handle[0];
+        console.log(`🔌 [Send Template] Fetching header media from Meta CDN: ${handleUrl}`);
+        try {
+          const fetchRes = await fetch(handleUrl);
+          if (fetchRes.ok) {
+            const fileBuffer = Buffer.from(await fetchRes.arrayBuffer());
+            const mimeType = fetchRes.headers.get("content-type") || "image/jpeg";
+            const blob = new Blob([fileBuffer], { type: mimeType });
+
+            const waForm = new FormData();
+            waForm.append("messaging_product", "whatsapp");
+            waForm.append("file", blob, "header-file");
+
+            const uploadRes = await fetch(
+              `${GRAPH_BASE_URL}/${META_API_VERSION}/${gym.whatsapp_phone_number_id}/media`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`
+                },
+                body: waForm
+              }
+            );
+
+            if (uploadRes.ok) {
+              const uploadData = await uploadRes.json();
+              const mediaId = uploadData.id;
+              if (mediaId) {
+                const formatLower = headerComp.format.toLowerCase();
+                components.push({
+                  type: "header",
+                  parameters: [
+                    {
+                      type: formatLower,
+                      [formatLower]: {
+                        id: mediaId
+                      }
+                    }
+                  ]
+                });
+                console.log(`✅ [Send Template] Synced header media uploaded to Meta. ID: ${mediaId}`);
+              }
+            } else {
+              const errData = await uploadRes.json();
+              console.error("❌ Failed to upload template header media to Meta from CDN handle:", errData);
+            }
+          } else {
+            console.error(`❌ Failed to fetch header media from CDN handle, status: ${fetchRes.status}`);
+          }
+        } catch (fetchErr) {
+          console.error("❌ Error fetching/uploading header media from CDN handle:", fetchErr);
+        }
       }
     }
 

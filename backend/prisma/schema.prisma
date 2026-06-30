@@ -155,7 +155,7 @@ enum CallPermissionStatus {
 
 model Member {
   id               String            @id @default(uuid())
-  memberName       String
+  memberName       String?
   whatsappName     String?
   phone            String            // WhatsApp Number, unique per gym
   email            String?

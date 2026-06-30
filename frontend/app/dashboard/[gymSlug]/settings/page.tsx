@@ -783,7 +783,7 @@ export default function WhatsAppSetupPage() {
           >
             {/* Header info */}
             <div className="text-center max-w-xl mx-auto space-y-2">
-              <h3 className="text-xl font-bold text-white">Choose Setup Method</h3>
+              <h3 className="text-xl font-bold text-zinc-100">Choose Setup Method</h3>
               <p className="text-xs text-zinc-500">
                 Configure your WhatsApp Business API connection. Access tokens are stored securely encrypted.
               </p>
@@ -817,7 +817,7 @@ export default function WhatsAppSetupPage() {
                     </span>
                   )}
                 </div>
-                <h4 className="font-extrabold text-sm text-white mb-1">Embedded Signup</h4>
+                <h4 className="font-extrabold text-sm text-zinc-100 mb-1">Embedded Signup</h4>
                 <p className="text-xs text-zinc-500 leading-relaxed mb-4">
                   The recommended method. Log in directly using your Meta profile to sync the integration.
                 </p>
@@ -853,7 +853,7 @@ export default function WhatsAppSetupPage() {
                     </span>
                   )}
                 </div>
-                <h4 className="font-extrabold text-sm text-white mb-1">Manual Setup</h4>
+                <h4 className="font-extrabold text-sm text-zinc-100 mb-1">Manual Setup</h4>
                 <p className="text-xs text-zinc-500 leading-relaxed mb-4">
                   Enter your credentials manually. Copy IDs and Permanent Access Tokens from Meta Developer Suite.
                 </p>
