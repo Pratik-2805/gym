@@ -790,6 +790,7 @@ export default function InboxPage() {
         sender: m.direction === "outbound" ? "executive" : "customer",
         timestamp: m.createdAt,
         status: m.status ?? "delivered",
+        template: m.template,
       }));
 
       setMessages(mappedMessages);
