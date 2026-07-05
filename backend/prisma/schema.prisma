@@ -41,12 +41,7 @@ enum ReminderType {
   EXPIRED_7
 }
 
-enum WhatsappSessionStatus {
-  CONNECTED
-  DISCONNECTED
-  INITIALIZING
-  QR_READY
-}
+
 
 enum WhatsAppDisplayNameStatus {
   PENDING_REVIEW
@@ -94,7 +89,7 @@ model Gym {
   plans            MembershipPlan[]
   memberships      Membership[]
   transactions     Transaction[]
-  whatsappSession  WhatsappSession?
+
   chatbotSettings  ChatbotSettings?
   paymentSettings  PaymentSettings?
   renewalLogs      RenewalLog[]
@@ -239,15 +234,7 @@ model Transaction {
   invoice       Invoice?
 }
 
-model WhatsappSession {
-  id          String                @id @default(uuid())
-  sessionData String?               // Encrypted session JSON
-  qrCode      String?               // Current QR text to display
-  status      WhatsappSessionStatus @default(DISCONNECTED)
-  gymId       String                @unique
-  gym         Gym                   @relation(fields: [gymId], references: [id], onDelete: Cascade)
-  updatedAt   DateTime              @updatedAt
-}
+
 
 model ChatbotSettings {
   id               String   @id @default(uuid())
