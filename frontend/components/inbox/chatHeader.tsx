@@ -187,14 +187,13 @@ export default function ChatHeader({
         )}
 
         <div className="hidden sm:flex items-center gap-2">
-          <motion.button 
+          <motion.button
             onClick={conversation.callPermissionStatus === 'GRANTED' ? onCallClick : undefined}
             disabled={conversation.callPermissionStatus !== 'GRANTED'}
-            className={`p-2 rounded-xl transition-all flex items-center justify-center ${
-              conversation.callPermissionStatus === 'GRANTED'
-                ? "bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 cursor-pointer shadow-[0_0_15px_rgba(6,182,212,0.2)]"
-                : "text-zinc-600 bg-zinc-900 cursor-not-allowed"
-            }`}
+            className={`p-2 rounded-xl transition-all flex items-center justify-center ${conversation.callPermissionStatus === 'GRANTED'
+              ? "bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 cursor-pointer shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+              : "text-zinc-600 bg-zinc-900 cursor-not-allowed"
+              }`}
             title={conversation.callPermissionStatus === 'GRANTED' ? "Call" : "Customer hasn't granted calling permission."}
           >
             <Phone className="w-5 h-5" />
@@ -208,24 +207,23 @@ export default function ChatHeader({
                 onRequestCallPermission?.();
                 setTimeout(() => setIsCooldown(false), 60000);
               }}
-              disabled={isCooldown || conversation.callPermissionStatus === 'PENDING'}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${
-                isCooldown || conversation.callPermissionStatus === 'PENDING'
-                  ? "bg-zinc-800 text-zinc-500 border-zinc-700 cursor-not-allowed"
-                  : conversation.callPermissionStatus === 'DENIED' || conversation.callPermissionStatus === 'REVOKED'
+              disabled={isCooldown}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors border ${isCooldown
+                ? "bg-zinc-800 text-zinc-500 border-zinc-700 cursor-not-allowed"
+                : conversation.callPermissionStatus === 'DENIED' || conversation.callPermissionStatus === 'REVOKED'
                   ? "bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20"
                   : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20"
-              }`}
+                }`}
             >
-              {isCooldown || conversation.callPermissionStatus === 'PENDING'
+              {isCooldown
                 ? "Waiting..."
-                : conversation.callPermissionStatus === 'DENIED' || conversation.callPermissionStatus === 'REVOKED'
-                ? "Request Again"
-                : "Request Permission"}
+                : conversation.callPermissionStatus === 'PENDING' || conversation.callPermissionStatus === 'DENIED' || conversation.callPermissionStatus === 'REVOKED'
+                  ? "Request Again"
+                  : "Request Permission"}
             </button>
           )}
         </div>
-        
+
         {onToggleBlock && (
           <div className="relative" ref={menuRef}>
             <motion.button
@@ -242,11 +240,10 @@ export default function ChatHeader({
                     setIsMenuOpen(false);
                     onToggleBlock();
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-900 transition-colors flex items-center gap-2.5 cursor-pointer ${
-                    conversation.isBlocked
-                      ? "text-green-400"
-                      : "text-rose-500"
-                  }`}
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-900 transition-colors flex items-center gap-2.5 cursor-pointer ${conversation.isBlocked
+                    ? "text-green-400"
+                    : "text-rose-500"
+                    }`}
                 >
                   {conversation.isBlocked ? (
                     <>

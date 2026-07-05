@@ -35,6 +35,13 @@ const parseMessageText = (rawText) => {
           caption: parsed.caption
         };
       }
+      if (parsed.isTemplate) {
+        return {
+          content: parsed.content,
+          isTemplate: true,
+          template: parsed.template
+        };
+      }
     } catch (e) {
       // Not JSON or parse failed
     }
@@ -62,6 +69,21 @@ router.get("/", async (req, res) => {
     if (!gym) {
       return res.status(404).json({ error: "Gym not found" });
     }
+
+    // Auto-reset stuck PENDING call permissions (older than 5 minutes)
+    await prisma.member.updateMany({
+      where: {
+        gymId: gym.id,
+        callPermissionStatus: "PENDING",
+        callPermissionRequestedAt: {
+          lt: new Date(Date.now() - 5 * 60 * 1000)
+        }
+      },
+      data: {
+        callPermissionStatus: "UNKNOWN",
+        callPermissionUpdatedAt: new Date(),
+      }
+    });
 
     const members = await prisma.member.findMany({
       where: { gymId: gym.id }
@@ -117,8 +139,8 @@ router.get("/", async (req, res) => {
 
         const now = new Date();
         const sessionStarted = !!lastInbound;
-        const sessionExpiresAt = lastInbound 
-          ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000) 
+        const sessionExpiresAt = lastInbound
+          ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000)
           : null;
         const sessionActive = sessionExpiresAt ? sessionExpiresAt > now : false;
 
@@ -134,12 +156,12 @@ router.get("/", async (req, res) => {
           planName: activeMembership ? activeMembership.plan.name : null,
           lastMessage: lastMessage
             ? {
-                id: lastMessage.id,
-                content: parsedText.mediaUrl ? (parsedText.mimeType?.startsWith("image/") ? "📷 Photo" : parsedText.mimeType?.startsWith("video/") ? "🎥 Video" : "📄 Document") : parsedText.content,
-                direction: lastMessage.direction.toLowerCase(),
-                status: lastMessage.status.toLowerCase(),
-                createdAt: lastMessage.createdAt
-              }
+              id: lastMessage.id,
+              content: parsedText.mediaUrl ? (parsedText.mimeType?.startsWith("image/") ? "📷 Photo" : parsedText.mimeType?.startsWith("video/") ? "🎥 Video" : "📄 Document") : parsedText.content,
+              direction: lastMessage.direction.toLowerCase(),
+              status: lastMessage.status.toLowerCase(),
+              createdAt: lastMessage.createdAt
+            }
             : null,
           lastMessageAt: lastMessage ? lastMessage.createdAt : member.updatedAt,
           unreadCount,
@@ -180,6 +202,21 @@ router.get("/:memberId", async (req, res) => {
     if (!gym) {
       return res.status(404).json({ error: "Gym not found" });
     }
+
+    // Auto-reset stuck PENDING call permissions (older than 5 minutes)
+    await prisma.member.updateMany({
+      where: {
+        gymId: gym.id,
+        callPermissionStatus: "PENDING",
+        callPermissionRequestedAt: {
+          lt: new Date(Date.now() - 5 * 60 * 1000)
+        }
+      },
+      data: {
+        callPermissionStatus: "UNKNOWN",
+        callPermissionUpdatedAt: new Date(),
+      }
+    });
 
     const member = await prisma.member.findUnique({
       where: { id: memberId }
@@ -223,7 +260,8 @@ router.get("/:memberId", async (req, res) => {
         caption: parsed.caption,
         direction: m.direction.toLowerCase(),
         status: m.status.toLowerCase(),
-        createdAt: m.createdAt
+        createdAt: m.createdAt,
+        template: parsed.template
       };
     });
 
@@ -239,8 +277,8 @@ router.get("/:memberId", async (req, res) => {
 
     const now = new Date();
     const sessionStarted = !!lastInbound;
-    const sessionExpiresAt = lastInbound 
-      ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000) 
+    const sessionExpiresAt = lastInbound
+      ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000)
       : null;
     const sessionActive = sessionExpiresAt ? sessionExpiresAt > now : false;
 
@@ -1095,6 +1133,59 @@ router.post("/:memberId/send-template", async (req, res) => {
             console.log(`✅ [Send Template] Header media uploaded. ID: ${mediaId}`);
           }
         }
+      } else if (fileInfo && Array.isArray(fileInfo.header_handle) && fileInfo.header_handle.length > 0) {
+        const handleUrl = fileInfo.header_handle[0];
+        console.log(`🔌 [Send Template] Fetching header media from Meta CDN: ${handleUrl}`);
+        try {
+          const fetchRes = await fetch(handleUrl);
+          if (fetchRes.ok) {
+            const fileBuffer = Buffer.from(await fetchRes.arrayBuffer());
+            const mimeType = fetchRes.headers.get("content-type") || "image/jpeg";
+            const blob = new Blob([fileBuffer], { type: mimeType });
+
+            const waForm = new FormData();
+            waForm.append("messaging_product", "whatsapp");
+            waForm.append("file", blob, "header-file");
+
+            const uploadRes = await fetch(
+              `${GRAPH_BASE_URL}/${META_API_VERSION}/${gym.whatsapp_phone_number_id}/media`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`
+                },
+                body: waForm
+              }
+            );
+
+            if (uploadRes.ok) {
+              const uploadData = await uploadRes.json();
+              const mediaId = uploadData.id;
+              if (mediaId) {
+                const formatLower = headerComp.format.toLowerCase();
+                components.push({
+                  type: "header",
+                  parameters: [
+                    {
+                      type: formatLower,
+                      [formatLower]: {
+                        id: mediaId
+                      }
+                    }
+                  ]
+                });
+                console.log(`✅ [Send Template] Synced header media uploaded to Meta. ID: ${mediaId}`);
+              }
+            } else {
+              const errData = await uploadRes.json();
+              console.error("❌ Failed to upload template header media to Meta from CDN handle:", errData);
+            }
+          } else {
+            console.error(`❌ Failed to fetch header media from CDN handle, status: ${fetchRes.status}`);
+          }
+        } catch (fetchErr) {
+          console.error("❌ Error fetching/uploading header media from CDN handle:", fetchErr);
+        }
       }
     }
 
@@ -1151,6 +1242,65 @@ router.post("/:memberId/send-template", async (req, res) => {
       });
     }
 
+    // Resolve Header details for DB storage
+    let headerPayload = null;
+    if (headerComp && headerComp.format !== "NONE") {
+      if (headerComp.format === "TEXT") {
+        headerPayload = {
+          type: "TEXT",
+          text: headerComp.text
+        };
+      } else {
+        const fileInfo = headerComp.example;
+        let s3Url = "";
+        if (fileInfo) {
+          if (fileInfo.local_filename) {
+            s3Url = `/uploads/templates/${fileInfo.local_filename}`;
+          } else if (Array.isArray(fileInfo.header_handle) && fileInfo.header_handle[0]) {
+            s3Url = fileInfo.header_handle[0];
+          }
+        }
+        headerPayload = {
+          type: headerComp.format, // IMAGE, VIDEO, DOCUMENT
+          mediaUrl: s3Url
+        };
+      }
+    }
+
+    // Resolve Footer
+    const footerComp = componentsRaw.find((c) => c.type === "FOOTER");
+    const footerText = footerComp ? footerComp.text : null;
+
+    // Resolve Buttons
+    const buttonsComp = componentsRaw.find((c) => c.type === "BUTTONS");
+    let templateButtons = [];
+    if (buttonsComp && Array.isArray(buttonsComp.buttons)) {
+      templateButtons = buttonsComp.buttons.map((b) => ({
+        type: b.type,
+        text: b.text,
+        value: b.url || b.phone_number || undefined
+      }));
+    }
+
+    const templatePayload = {
+      header: headerPayload,
+      body: {
+        type: "TEXT",
+        text: content
+      },
+      footer: footerText,
+      buttons: templateButtons
+    };
+
+    const textPayload = JSON.stringify({
+      isTemplate: true,
+      templateId: template.id,
+      templateName: template.templateName,
+      bodyVariables,
+      content: content,
+      template: templatePayload
+    });
+
     // Save message to DB
     const savedMessage = await prisma.whatsAppMessage.create({
       data: {
@@ -1158,16 +1308,23 @@ router.post("/:memberId/send-template", async (req, res) => {
         messageId,
         senderPhone: gym.whatsappDisplayPhoneNumber || "system",
         recipientPhone: member.phone,
-        text: content,
+        text: textPayload,
         direction: "OUTBOUND",
         status: "SENT"
       }
     });
 
+    const parsedText = parseMessageText(savedMessage.text);
+
     const mappedMsg = {
       id: savedMessage.id,
       whatsappMessageId: savedMessage.messageId,
-      content: savedMessage.text,
+      content: parsedText.content,
+      text: parsedText.content,
+      mediaUrl: parsedText.mediaUrl,
+      mimeType: parsedText.mimeType,
+      caption: parsedText.caption,
+      template: parsedText.template,
       direction: "outbound",
       status: "sent",
       createdAt: savedMessage.createdAt
@@ -1205,7 +1362,7 @@ router.post("/:memberId/send-media", upload.single("file"), async (req, res) => 
 
   // Security check: Block executable/script files that could harm the platform or recipient
   const harmfulExtensions = [
-    ".exe", ".msi", ".bat", ".cmd", ".sh", ".vbs", ".js", ".scr", ".pif", ".cpl", 
+    ".exe", ".msi", ".bat", ".cmd", ".sh", ".vbs", ".js", ".scr", ".pif", ".cpl",
     ".wsf", ".jar", ".com", ".gadget", ".vb", ".vbe", ".jse", ".lnk", ".reg"
   ];
   const ext = path.extname(file.originalname || "").toLowerCase();
@@ -1275,10 +1432,10 @@ router.post("/:memberId/send-media", upload.single("file"), async (req, res) => 
     const mediaType = file.mimetype.startsWith("image/")
       ? "image"
       : file.mimetype.startsWith("video/")
-      ? "video"
-      : file.mimetype.startsWith("audio/")
-      ? "audio"
-      : "document";
+        ? "video"
+        : file.mimetype.startsWith("audio/")
+          ? "audio"
+          : "document";
 
     const sendPayload = {
       messaging_product: "whatsapp",

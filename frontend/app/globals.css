@@ -850,4 +850,40 @@ html {
   box-shadow: 0 0 15px #4f46e5, 0 0 30px #ec4899;
   z-index: 15;
 }
-
+
+/* =====================================================
+   SIDEBAR 3D FLIP ANIMATIONS
+   ===================================================== */
+.sidebar-perspective {
+  perspective: 1200px;
+}
+
+.sidebar-flipper {
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.sidebar-flipped {
+  transform: rotateY(180deg);
+}
+
+.sidebar-front,
+.sidebar-back {
+  backface-visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-back {
+  transform: rotateY(180deg);
+}
+
+

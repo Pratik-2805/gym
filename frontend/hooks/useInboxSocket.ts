@@ -54,10 +54,10 @@ export function useInboxSocket({
         prev.map((c) =>
           c.id === member.id
             ? {
-                ...c,
-                callPermissionStatus: member.callPermissionStatus || c.callPermissionStatus,
-                isBlocked: member.blockedAt ? true : false,
-              }
+              ...c,
+              callPermissionStatus: member.callPermissionStatus || c.callPermissionStatus,
+              isBlocked: member.blockedAt ? true : false,
+            }
             : c
         )
       );

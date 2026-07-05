@@ -1578,7 +1578,7 @@ router.post(
       }
 
       const token = decrypt(gym.whatsapp_access_token);
-      
+
       const payload = {
         messaging_product: "whatsapp",
         to,
@@ -1610,7 +1610,7 @@ router.post(
       }
 
       const callId = data.calls?.[0]?.id;
-      
+
       res.json({
         success: true,
         callId
@@ -1650,7 +1650,7 @@ router.post(
       }
 
       const token = decrypt(gym.whatsapp_access_token);
-      
+
       const payload = {
         messaging_product: "whatsapp",
         call_id: callId,
@@ -1712,7 +1712,7 @@ router.post(
       }
 
       const token = decrypt(gym.whatsapp_access_token);
-      
+
       const payload = {
         messaging_product: "whatsapp",
         call_id: callId,
@@ -1786,7 +1786,7 @@ router.post(
       }
 
       const token = decrypt(gym.whatsapp_access_token);
-      
+
       const payload = {
         messaging_product: "whatsapp",
         recipient_type: "individual",
@@ -1829,6 +1829,40 @@ router.post(
           callPermissionRequestCount: { increment: 1 }
         }
       });
+
+      // Log the outbound call permission request message in the database
+      const requestMsgId = data.messages?.[0]?.id;
+      if (requestMsgId) {
+        try {
+          const savedMessage = await prisma.whatsAppMessage.create({
+            data: {
+              gymId: gym.id,
+              messageId: requestMsgId,
+              senderPhone: gym.whatsappDisplayPhoneNumber || "",
+              recipientPhone: member.phone,
+              text: "📞 [Call Permission Request]",
+              direction: "OUTBOUND",
+              status: "SENT",
+            }
+          });
+
+          const io = await import("../socket.js").then(m => m.getIO());
+          io.to(`gym:${gym.id}`).emit("whatsapp:message", savedMessage);
+
+          io.to(`conversation:${member.id}`).emit("message:new", {
+            id: savedMessage.id,
+            whatsappMessageId: savedMessage.messageId,
+            content: savedMessage.text,
+            text: savedMessage.text,
+            direction: "outbound",
+            status: "sent",
+            createdAt: savedMessage.createdAt
+          });
+          io.to(`gym:${gym.id}`).emit("inbox:update");
+        } catch (dbErr) {
+          console.error("❌ Failed to log call permission request message to DB:", dbErr.message);
+        }
+      }
 
       // Broadcast to socket clients
       import("../socket.js").then(({ getIO }) => {
