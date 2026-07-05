@@ -36,40 +36,12 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
 
   const [gymName, setGymName] = useState(gym?.name || 'fit');
   const [gymLogo, setGymLogo] = useState<string | null>(null);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [tempGymName, setTempGymName] = useState(gym?.name || 'fit');
-  const [tempGymLogo, setTempGymLogo] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedName = localStorage.getItem('fitflow_gym_name');
-    const savedLogo = localStorage.getItem('fitflow_gym_logo');
-    if (savedName !== null) {
-      setGymName(savedName);
-    } else if (gym?.name) {
+    if (gym?.name) {
       setGymName(gym.name);
     }
-    if (savedLogo !== null) setGymLogo(savedLogo);
   }, [gym?.name]);
-
-  const openProfileModal = () => {
-    setTempGymName(gymName);
-    setTempGymLogo(gymLogo);
-    setIsCollapsed(false);
-    setIsFlipped(true);
-  };
-
-  const handleSaveSettings = (newName: string, newLogo: string | null) => {
-    const nameVal = newName.trim() || gym?.name || 'fit';
-    setGymName(nameVal);
-    setGymLogo(newLogo);
-    localStorage.setItem('fitflow_gym_name', nameVal);
-    if (newLogo) {
-      localStorage.setItem('fitflow_gym_logo', newLogo);
-    } else {
-      localStorage.removeItem('fitflow_gym_logo');
-    }
-    setIsFlipped(false);
-  };
 
   // Global Inbound Call State
   const [incomingCall, setIncomingCall] = useState<any>(null);
@@ -151,129 +123,36 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
           )}
         </div>
 
-        {/* Navigation Items (with flip card container) */}
-        <div className="flex-1 relative sidebar-perspective w-full min-h-[300px]">
-          <div className={`sidebar-flipper ${isFlipped ? 'sidebar-flipped' : ''}`}>
-            
-            {/* FRONT FACE (standard navigation menu) */}
-            <nav className="sidebar-front flex flex-col space-y-1 px-3 py-4 overflow-y-auto overflow-x-hidden bg-transparent">
-              {sidebarLinks.map((link) => {
-                const isActive = pathname.startsWith(link.href);
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    title={isCollapsed ? link.label : undefined}
-                    className={`flex items-center rounded-xl py-3 text-xs font-semibold transition-all duration-300 ${
-                      isCollapsed ? 'justify-center px-0' : 'px-4'
-                    } ${
-                      isActive 
-                        ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]' 
-                        : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-100 border border-transparent'
-                    }`}
-                  >
-                    {link.icon}
-                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>
-                      {link.label}
-                    </span>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* BACK FACE (Customize Gym settings form) */}
-            <div className="sidebar-back bg-zinc-950 p-5 flex flex-col justify-between overflow-y-auto border-t border-b border-zinc-900">
-              <div className="space-y-6">
-                <div className="border-b border-zinc-900 pb-3">
-                  <h3 className="text-sm font-extrabold text-white">Customize Gym</h3>
-                  <p className="text-[10px] text-zinc-500 mt-1">Configure your workspace branding</p>
-                </div>
-
-                <div className="space-y-4 text-xs">
-                  {/* Gym Name Input */}
-                  <div>
-                    <label className="block font-bold text-zinc-400 mb-1.5 uppercase tracking-wider text-[10px]">Gym Name</label>
-                    <input 
-                      type="text"
-                      value={tempGymName}
-                      onChange={(e) => setTempGymName(e.target.value)}
-                      placeholder="e.g. fit"
-                      className="w-full rounded-xl border border-zinc-805 bg-zinc-900 px-3 py-2 text-zinc-100 focus:outline-none focus:border-cyan-500 placeholder-zinc-650"
-                    />
-                  </div>
-
-                  {/* Gym Logo Upload Input */}
-                  <div>
-                    <label className="block font-bold text-zinc-400 mb-1.5 uppercase tracking-wider text-[10px]">Gym Logo Image</label>
-                    
-                    {tempGymLogo && (
-                      <div className="mb-2.5 flex items-center gap-2 bg-zinc-900/60 p-2 rounded-xl border border-zinc-805">
-                        <img src={tempGymLogo} alt="Preview" className="h-8 w-8 object-contain rounded-md" />
-                        <span className="text-[10px] text-zinc-500 truncate flex-1">Logo image selected</span>
-                        <button 
-                          type="button" 
-                          onClick={() => setTempGymLogo(null)}
-                          className="text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2">
-                      <input 
-                        type="file"
-                        accept="image/*"
-                        id="brand-logo-file-flip-nav"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                              if (event.target?.result) {
-                                setTempGymLogo(event.target.result as string);
-                              }
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                      <label 
-                        htmlFor="brand-logo-file-flip-nav"
-                        className="flex-1 text-center py-2.5 rounded-xl border border-dashed border-zinc-805 bg-zinc-900/30 hover:bg-zinc-900/60 cursor-pointer text-zinc-400 hover:text-zinc-300 transition-colors font-semibold"
-                      >
-                        Upload Logo
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 text-xs border-t border-zinc-900 pt-4 mt-6">
-                <button
-                  onClick={() => handleSaveSettings(tempGymName, tempGymLogo)}
-                  className="flex-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 py-3 font-bold text-white transition-colors cursor-pointer"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setIsFlipped(false)}
-                  className="flex-1 rounded-xl border border-zinc-805 hover:bg-zinc-900 py-3 font-bold text-zinc-400 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
+        {/* Navigation Items */}
+        <nav className="flex-1 flex flex-col space-y-1 px-3 py-4 overflow-y-auto overflow-x-hidden bg-transparent w-full min-h-[300px]">
+          {sidebarLinks.map((link) => {
+            const isActive = pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                title={isCollapsed ? link.label : undefined}
+                className={`flex items-center rounded-xl py-3 text-xs font-semibold transition-all duration-300 ${
+                  isCollapsed ? 'justify-center px-0' : 'px-4'
+                } ${
+                  isActive 
+                    ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]' 
+                    : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-100 border border-transparent'
+                }`}
+              >
+                {link.icon}
+                <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>
+                  {link.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
 
         {/* Bottom Profile Details */}
         <div className={`border-t border-zinc-805 transition-all duration-300 bg-zinc-950/40 ${isCollapsed ? 'flex flex-col items-center gap-4 p-2 py-4' : 'p-4'}`}>
-          <button
-            onClick={openProfileModal}
-            className={`flex items-center transition-all duration-300 hover:bg-zinc-800/35 p-1.5 rounded-xl cursor-pointer w-full text-left ${isCollapsed ? 'mb-0 justify-center' : 'mb-4'}`}
+          <div
+            className={`flex items-center p-1.5 rounded-xl w-full text-left ${isCollapsed ? 'mb-0 justify-center' : 'mb-4'}`}
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-950 border border-cyan-800 text-cyan-400 font-extrabold text-xs shrink-0" title={activeUser.name}>
               {activeUser.name.substring(0, 2).toUpperCase()}
@@ -284,7 +163,7 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
                 <UserCheck className="h-2.5 w-2.5 text-cyan-400 shrink-0" /> {activeUser.role}
               </span>
             </div>
-          </button>
+          </div>
 
           <form action="/api/auth/logout" method="POST" className={isCollapsed ? 'w-full flex justify-center' : 'w-full'}>
             <button
