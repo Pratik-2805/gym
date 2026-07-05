@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('SUPERADMIN', 'OWNER', 'STAFF');
+CREATE TYPE "Role" AS ENUM ('SUPERADMIN', 'GYM_OWNER', 'STAFF');
 
 -- CreateEnum
 CREATE TYPE "MembershipStatus" AS ENUM ('ACTIVE', 'EXPIRED', 'CANCELLED');
@@ -16,6 +16,12 @@ CREATE TYPE "ReminderType" AS ENUM ('EXPIRING_7', 'EXPIRING_3', 'EXPIRING_1', 'E
 -- CreateEnum
 CREATE TYPE "WhatsappSessionStatus" AS ENUM ('CONNECTED', 'DISCONNECTED', 'INITIALIZING', 'QR_READY');
 
+-- CreateEnum
+CREATE TYPE "WhatsAppDisplayNameStatus" AS ENUM ('PENDING_REVIEW', 'APPROVED', 'DECLINED', 'REGISTERING', 'REGISTERED', 'REGISTRATION_FAILED');
+
+-- CreateEnum
+CREATE TYPE "CallPermissionStatus" AS ENUM ('UNKNOWN', 'PENDING', 'GRANTED', 'DENIED', 'REVOKED');
+
 -- CreateTable
 CREATE TABLE "Gym" (
     "id" TEXT NOT NULL,
@@ -23,8 +29,53 @@ CREATE TABLE "Gym" (
     "slug" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "whatsapp_connected" BOOLEAN NOT NULL DEFAULT false,
+    "whatsapp_phone_number" TEXT,
+    "whatsapp_phone_number_id" TEXT,
+    "whatsapp_waba_id" TEXT,
+    "whatsapp_business_id" TEXT,
+    "whatsapp_access_token" TEXT,
+    "whatsappStatus" TEXT DEFAULT 'disconnected',
+    "whatsappVerifiedAt" TIMESTAMP(3),
+    "whatsappLastError" TEXT,
+    "whatsappVerificationStatus" TEXT DEFAULT 'NOT_VERIFIED',
+    "whatsappQualityRating" TEXT DEFAULT 'UNKNOWN',
+    "whatsappMessagingTier" TEXT DEFAULT 'UNKNOWN',
+    "whatsappVerifiedName" TEXT,
+    "whatsappDisplayPhoneNumber" TEXT,
+    "whatsappNameStatus" "WhatsAppDisplayNameStatus",
+    "pendingDisplayName" TEXT,
+    "pendingNameStatus" "WhatsAppDisplayNameStatus",
+    "lastNameChangeRequestAt" TIMESTAMP(3),
+    "lastNameApprovedAt" TIMESTAMP(3),
+    "lastRegistrationAttemptAt" TIMESTAMP(3),
+    "registrationError" TEXT,
+    "displayNameRetryCount" INTEGER NOT NULL DEFAULT 0,
+    "displayNameLockedUntil" TIMESTAMP(3),
 
     CONSTRAINT "Gym_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WhatsAppDisplayNameHistory" (
+    "id" TEXT NOT NULL,
+    "gymId" TEXT NOT NULL,
+    "requestedByUserId" TEXT,
+    "phoneNumberId" TEXT NOT NULL,
+    "graphApiVersion" TEXT NOT NULL,
+    "oldName" TEXT,
+    "newName" TEXT NOT NULL,
+    "status" "WhatsAppDisplayNameStatus" NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "metaResponse" JSONB,
+    "requestedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "approvedAt" TIMESTAMP(3),
+    "registeredAt" TIMESTAMP(3),
+    "rejectionReason" TEXT,
+    "processedByWorker" BOOLEAN NOT NULL DEFAULT false,
+    "workerAttempts" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "WhatsAppDisplayNameHistory_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -44,7 +95,8 @@ CREATE TABLE "GymUser" (
 -- CreateTable
 CREATE TABLE "Member" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "memberName" TEXT,
+    "whatsappName" TEXT,
     "phone" TEXT NOT NULL,
     "email" TEXT,
     "address" TEXT,
@@ -52,6 +104,14 @@ CREATE TABLE "Member" (
     "emergencyContact" TEXT,
     "notes" TEXT,
     "isBotDisabled" BOOLEAN NOT NULL DEFAULT false,
+    "blockedAt" TIMESTAMP(3),
+    "callPermissionStatus" "CallPermissionStatus" NOT NULL DEFAULT 'UNKNOWN',
+    "callPermissionUpdatedAt" TIMESTAMP(3),
+    "callPermissionVerifiedAt" TIMESTAMP(3),
+    "callPermissionRequestedAt" TIMESTAMP(3),
+    "callPermissionGrantedAt" TIMESTAMP(3),
+    "callPermissionRevokedAt" TIMESTAMP(3),
+    "callPermissionRequestCount" INTEGER NOT NULL DEFAULT 0,
     "gymId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -201,6 +261,64 @@ CREATE TABLE "AuditLog" (
     CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "WhatsAppMessages" (
+    "id" TEXT NOT NULL,
+    "gymId" TEXT NOT NULL,
+    "messageId" TEXT NOT NULL,
+    "senderPhone" TEXT NOT NULL,
+    "recipientPhone" TEXT NOT NULL,
+    "text" TEXT NOT NULL,
+    "direction" TEXT NOT NULL,
+    "status" TEXT NOT NULL,
+    "errorMessage" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "WhatsAppMessages_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WhatsAppEvents" (
+    "id" TEXT NOT NULL,
+    "messageId" TEXT NOT NULL,
+    "eventType" TEXT NOT NULL,
+    "timestamp" TIMESTAMP(3) NOT NULL,
+    "rawPayload" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "WhatsAppEvents_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WhatsAppTemplates" (
+    "id" TEXT NOT NULL,
+    "gymId" TEXT NOT NULL,
+    "templateName" TEXT NOT NULL,
+    "metaTemplateId" TEXT,
+    "language" TEXT NOT NULL DEFAULT 'en_US',
+    "category" TEXT NOT NULL DEFAULT 'UTILITY',
+    "status" TEXT NOT NULL,
+    "components" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "WhatsAppTemplates_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserCredential" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "credentialID" TEXT NOT NULL,
+    "publicKey" TEXT NOT NULL,
+    "counter" INTEGER NOT NULL DEFAULT 0,
+    "transports" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "UserCredential_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Gym_slug_key" ON "Gym"("slug");
 
@@ -224,6 +342,18 @@ CREATE UNIQUE INDEX "Invoice_transactionId_key" ON "Invoice"("transactionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Invoice_invoiceNumber_key" ON "Invoice"("invoiceNumber");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "WhatsAppMessages_messageId_key" ON "WhatsAppMessages"("messageId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "WhatsAppTemplates_gymId_templateName_key" ON "WhatsAppTemplates"("gymId", "templateName");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserCredential_credentialID_key" ON "UserCredential"("credentialID");
+
+-- AddForeignKey
+ALTER TABLE "WhatsAppDisplayNameHistory" ADD CONSTRAINT "WhatsAppDisplayNameHistory_gymId_fkey" FOREIGN KEY ("gymId") REFERENCES "Gym"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "GymUser" ADD CONSTRAINT "GymUser_gymId_fkey" FOREIGN KEY ("gymId") REFERENCES "Gym"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -287,3 +417,15 @@ ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_gymId_fkey" FOREIGN KEY ("gymId"
 
 -- AddForeignKey
 ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "GymUser"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WhatsAppMessages" ADD CONSTRAINT "WhatsAppMessages_gymId_fkey" FOREIGN KEY ("gymId") REFERENCES "Gym"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WhatsAppEvents" ADD CONSTRAINT "WhatsAppEvents_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "WhatsAppMessages"("messageId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WhatsAppTemplates" ADD CONSTRAINT "WhatsAppTemplates_gymId_fkey" FOREIGN KEY ("gymId") REFERENCES "Gym"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserCredential" ADD CONSTRAINT "UserCredential_userId_fkey" FOREIGN KEY ("userId") REFERENCES "GymUser"("id") ON DELETE CASCADE ON UPDATE CASCADE;

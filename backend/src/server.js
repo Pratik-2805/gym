@@ -6,6 +6,7 @@ import http from "http";
 import prisma from "./prisma.js";
 import { initSocket } from "./socket.js";
 import authRouter from "./routes/auth.js";
+import webauthnRouter from "./routes/webauthn.js";
 import usersRouter from "./routes/users.js";
 import whatsappRouter from "./routes/whatsapp.route.js";
 import whatsappWebhookRouter from "./routes/whatsappWebhook.route.js";
@@ -14,6 +15,7 @@ import inboxRouter from "./routes/inbox.route.js";
 import membersRouter from "./routes/members.route.js";
 import plansRouter from "./routes/plans.route.js";
 import paymentsRouter from "./routes/payments.route.js";
+import analyticsRouter from "./routes/analytics.route.js";
 import { authenticateToken, scopeToGym } from "./middleware/auth.js";
 import "./lib/queue.js";
 
@@ -56,6 +58,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/auth/webauthn", webauthnRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/dashboard/:gymSlug/whatsapp/templates", authenticateToken, scopeToGym, whatsappTemplatesRouter);
 app.use("/api/dashboard/:gymSlug/whatsapp", authenticateToken, scopeToGym, whatsappRouter);
@@ -63,6 +66,7 @@ app.use("/api/dashboard/:gymSlug/inbox", authenticateToken, scopeToGym, inboxRou
 app.use("/api/dashboard/:gymSlug/members", authenticateToken, scopeToGym, membersRouter);
 app.use("/api/dashboard/:gymSlug/plans", authenticateToken, scopeToGym, plansRouter);
 app.use("/api/dashboard/:gymSlug/payments", authenticateToken, scopeToGym, paymentsRouter);
+app.use("/api/dashboard/:gymSlug/analytics", authenticateToken, scopeToGym, analyticsRouter);
 app.use("/api/media/:gymSlug", authenticateToken, scopeToGym, mediaRouter);
 app.use("/uploads", express.static("uploads"));
 app.use("/webhook", whatsappWebhookRouter);
