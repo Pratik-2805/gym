@@ -158,11 +158,8 @@ model Member {
   memberName       String?
   whatsappName     String?
   phone            String            // WhatsApp Number, unique per gym
-  email            String?
   address          String?
-  dob              DateTime?
   emergencyContact String?
-  notes            String?
   isBotDisabled    Boolean           @default(false) // For Human Takeover
   blockedAt        DateTime?
   
