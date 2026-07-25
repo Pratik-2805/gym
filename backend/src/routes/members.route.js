@@ -54,7 +54,7 @@ router.get("/", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   const { gymSlug } = req.params;
-  const { name, memberName, phone, email, address, dob, emergencyContact, notes, planId, startDate, endDate } = req.body;
+  const { name, memberName, phone, address, emergencyContact, planId, startDate, endDate } = req.body;
   const actualName = name || memberName;
 
   if (!actualName || !phone) {
@@ -93,11 +93,8 @@ router.post("/", async (req, res) => {
       gymId: gym.id,
       memberName: actualName,
       phone: formattedPhone,
-      email: email || null,
       address: address || null,
-      dob: dob ? new Date(dob) : null,
-      emergencyContact: emergencyContact || null,
-      notes: notes || null
+      emergencyContact: emergencyContact || null
     };
 
     if (planId && startDate && endDate) {
@@ -220,7 +217,7 @@ router.post("/:memberId/toggle-bot", async (req, res) => {
 router.put("/:memberId", async (req, res) => {
   try {
     const { gymSlug, memberId } = req.params;
-    const { name, phone, email, address, dob, emergencyContact, notes, planId, startDate, endDate } = req.body;
+    const { name, phone, address, emergencyContact, planId, startDate, endDate } = req.body;
 
     if (!name || !phone) {
       return res.status(400).json({ error: "Name and phone are required" });
@@ -264,11 +261,8 @@ router.put("/:memberId", async (req, res) => {
       data: {
         memberName: name,
         phone: formattedPhone,
-        email: email || null,
         address: address || null,
-        dob: dob ? new Date(dob) : null,
         emergencyContact: emergencyContact || null,
-        notes: notes || null,
       },
     });
 
@@ -365,6 +359,110 @@ router.delete("/:memberId", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("❌ [Members DELETE] Error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+/**
+ * =====================================
+ * BULK IMPORT MEMBERS
+ * =====================================
+ */
+router.post("/bulk", async (req, res) => {
+  const { gymSlug } = req.params;
+  const { members } = req.body;
+
+  if (!Array.isArray(members) || members.length === 0) {
+    return res.status(400).json({ error: "Invalid or empty members array" });
+  }
+
+  try {
+    const gym = await prisma.gym.findUnique({
+      where: { slug: gymSlug.toLowerCase() },
+      select: { id: true, name: true }
+    });
+
+    if (!gym) {
+      return res.status(404).json({ error: "Gym not found" });
+    }
+
+    const results = {
+      successful: 0,
+      failed: 0,
+      errors: []
+    };
+
+    for (let i = 0; i < members.length; i++) {
+      const member = members[i];
+      const actualName = member.name || member.memberName;
+      const phone = member.phone;
+
+      if (!actualName || !phone) {
+        results.failed++;
+        results.errors.push(`Row ${i + 1}: Name and phone are required.`);
+        continue;
+      }
+
+      // Clean phone number (leave digits only)
+      const formattedPhone = String(phone).replace(/\D/g, "");
+
+      // Check unique phone number per gym tenant
+      const existing = await prisma.member.findUnique({
+        where: {
+          gymId_phone: {
+            gymId: gym.id,
+            phone: formattedPhone
+          }
+        }
+      });
+
+      if (existing) {
+        results.failed++;
+        results.errors.push(`Row ${i + 1}: Phone number ${formattedPhone} is already registered.`);
+        continue;
+      }
+
+      const memberData = {
+        gymId: gym.id,
+        memberName: actualName,
+        phone: formattedPhone,
+        address: member.address || null,
+        emergencyContact: member.emergencyContact || null
+      };
+
+      const newMember = await prisma.member.create({
+        data: memberData
+      });
+
+      // Optionally send welcome message for bulk members? We can skip for now to avoid spamming 100s of numbers at once, or we can queue it.
+      // Let's queue it so they get a welcome message.
+      await prisma.notification.create({
+        data: {
+          gymId: gym.id,
+          memberId: newMember.id,
+          recipientPhone: formattedPhone,
+          title: `TEMPLATE:welcome_member:${actualName},${gym.name}`,
+          message: `Welcome ${actualName} to ${gym.name}! Your account has been registered successfully.`,
+          type: "ACTIVATION",
+          status: "PENDING",
+        },
+      });
+
+      results.successful++;
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        action: "MEMBER_BULK_IMPORT",
+        details: `Imported ${results.successful} members. Failed: ${results.failed}`,
+        gymId: gym.id,
+        userId: req.user?.userId || null
+      }
+    });
+
+    res.status(201).json({ success: true, results });
+  } catch (err) {
+    console.error("❌ [Members POST bulk] Error:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
