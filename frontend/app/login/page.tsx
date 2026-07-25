@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dumbbell, Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Dumbbell, Eye, EyeOff, Lock, Mail, ArrowRight, Fingerprint } from 'lucide-react';
+import { startAuthentication } from '@simplewebauthn/browser';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,12 +12,19 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
   
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!email || !password) {
+      setError('Email and password are required.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -44,6 +52,74 @@ export default function LoginPage() {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    setError('');
+    setIsPasskeyLoading(true);
+
+    try {
+      // 1. Get authentication options from the server
+      const optionsRes = await fetch('/api/auth/webauthn/login/options', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() || undefined }),
+        credentials: 'same-origin',
+      });
+
+      if (!optionsRes.ok) {
+        const errData = await optionsRes.json();
+        throw new Error(errData.error || 'Failed to generate authentication options');
+      }
+
+      const options = await optionsRes.json();
+
+      // 2. Trigger the browser biometric prompt
+      let assertionResponse;
+      try {
+        assertionResponse = await startAuthentication({ optionsJSON: options });
+      } catch (authErr: any) {
+        console.warn('Authenticator assertion failed:', authErr);
+        if (authErr.name === 'NotAllowedError') {
+          setError('No matching passkeys found on this device or prompt closed. Make sure you register your biometric passkey in settings first.');
+        } else {
+          setError(authErr.message || 'Passkey authentication failed.');
+        }
+        return;
+      }
+
+      // 3. Post verification assertion back to server
+      const verifyRes = await fetch('/api/auth/webauthn/login/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assertionResponse),
+        credentials: 'same-origin',
+      });
+
+      if (!verifyRes.ok) {
+        const verifyErr = await verifyRes.json();
+        throw new Error(verifyErr.error || 'Assertion verification failed');
+      }
+
+      const data = await verifyRes.json();
+
+      if (verifyRes.ok && data.success) {
+        if (data.user.role === 'SUPERADMIN') {
+          router.push('/superadmin');
+        } else if (data.user.gym) {
+          router.push(`/dashboard/${data.user.gym.slug}`);
+        } else {
+          setError('User profile not associated with a gym tenant.');
+        }
+      } else {
+        setError(data.error || 'Authentication failed.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'An unexpected error occurred during passkey login.');
+    } finally {
+      setIsPasskeyLoading(false);
     }
   };
 
@@ -93,7 +169,6 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@gym.com"
-                  required
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 py-3 pl-10 pr-4 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none transition-all duration-200"
                 />
               </div>
@@ -111,7 +186,6 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  required
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 py-3 pl-10 pr-10 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none transition-all duration-200"
                 />
                 <button
@@ -139,7 +213,7 @@ export default function LoginPage() {
             {/* Signin Button */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isPasskeyLoading}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 hover:brightness-110 active:scale-[0.98] transition-all duration-150 disabled:opacity-50"
             >
               {isLoading ? 'Signing you in...' : (
@@ -147,6 +221,25 @@ export default function LoginPage() {
                   Enter Dashboard <ArrowRight className="h-4 w-4" />
                 </>
               )}
+            </button>
+
+            {/* Divider */}
+            <div className="relative my-5 flex items-center justify-center">
+              <span className="absolute inset-x-0 h-px bg-zinc-800" />
+              <span className="relative bg-zinc-900 px-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Or
+              </span>
+            </div>
+
+            {/* Passkey Login Button */}
+            <button
+              type="button"
+              onClick={handlePasskeyLogin}
+              disabled={isLoading || isPasskeyLoading}
+              className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-950 hover:bg-zinc-900/60 hover:text-white py-3 text-sm font-bold text-zinc-400 active:scale-[0.98] transition-all duration-150 disabled:opacity-50"
+            >
+              <Fingerprint className="h-4.5 w-4.5 text-cyan-400" />
+              {isPasskeyLoading ? 'Verifying credential...' : 'Sign in with Passkey'}
             </button>
           </form>
 

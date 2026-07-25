@@ -143,6 +143,7 @@ model GymUser {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   auditLogs    AuditLog[]
+  credentials  UserCredential[]
 }
 
 enum CallPermissionStatus {
@@ -366,3 +367,15 @@ model WhatsAppTemplate {
   @@unique([gymId, templateName])
   @@map("WhatsAppTemplates")
 }
+
+model UserCredential {
+  id           String   @id @default(uuid())
+  userId       String
+  user         GymUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String   @unique
+  publicKey    String   // Base64URL encoded public key
+  counter      Int      @default(0)
+  transports   String?  // JSON-serialized array of transports
+  createdAt    DateTime @default(now())
+}
+
