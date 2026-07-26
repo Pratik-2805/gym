@@ -36,7 +36,7 @@ interface MemberData {
 }
 
 export default function MembersPage() {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
   const [members, setMembers] = useState<MemberData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -117,7 +117,7 @@ export default function MembersPage() {
     setError('');
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members/bulk`, {
+      const res = await fetch(`/api/dashboard/members/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ members: importPreview })
@@ -175,7 +175,7 @@ export default function MembersPage() {
   const fetchMembers = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members`);
+      const res = await fetch(`/api/dashboard/members`);
       if (res.ok) {
         const data = await res.json();
         setMembers(data.members || []);
@@ -189,7 +189,7 @@ export default function MembersPage() {
 
   const fetchPlans = async () => {
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/plans`);
+      const res = await fetch(`/api/dashboard/plans`);
       if (res.ok) {
         const data = await res.json();
         setPlans(data.plans || []);
@@ -202,7 +202,7 @@ export default function MembersPage() {
   useEffect(() => {
     fetchMembers();
     fetchPlans();
-  }, [gymSlug]);
+  }, []);
 
   const handlePlanChange = (planId: string) => {
     setSelectedPlanId(planId);
@@ -240,7 +240,7 @@ export default function MembersPage() {
     }
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members`, {
+      const res = await fetch(`/api/dashboard/members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -323,7 +323,7 @@ export default function MembersPage() {
     }
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members/${editingMember.id}`, {
+      const res = await fetch(`/api/dashboard/members/${editingMember.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -365,7 +365,7 @@ export default function MembersPage() {
     setError('');
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members/${memberId}`, {
+      const res = await fetch(`/api/dashboard/members/${memberId}`, {
         method: 'DELETE',
       });
 

@@ -6,7 +6,7 @@ import { Bot, Save, AlertCircle, Info, Brain } from 'lucide-react';
 import Simulator from '@/components/dashboard/Simulator';
 
 export default function ChatbotPage() {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
   const [gymId, setGymId] = useState('');
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [isAiModeEnabled, setIsAiModeEnabled] = useState(false);
@@ -20,7 +20,7 @@ export default function ChatbotPage() {
   const fetchSettings = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/chatbot`);
+      const res = await fetch(`/api/dashboard/chatbot`);
       if (res.ok) {
         const data = await res.json();
         setWelcomeMessage(data.chatbotSettings?.welcomeMessage || '');
@@ -37,7 +37,7 @@ export default function ChatbotPage() {
 
   useEffect(() => {
     fetchSettings();
-  }, [gymSlug]);
+  }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +46,7 @@ export default function ChatbotPage() {
     setError('');
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/chatbot`, {
+      const res = await fetch(`/api/dashboard/chatbot`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -207,7 +207,7 @@ export default function ChatbotPage() {
             <h3 className="text-xl font-extrabold tracking-tight text-white">Live Simulator Sandbox</h3>
             <p className="text-xs text-zinc-500 mt-1">Test your chatbot updates and dynamic payment flows instantly below!</p>
           </div>
-          <Simulator gymId={gymId} gymSlug={gymSlug} />
+          <Simulator gymId={gymId}  />
         </div>
       )}
     </div>

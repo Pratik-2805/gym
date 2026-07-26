@@ -152,7 +152,7 @@ const fetchMessagingTier = async (whatsappBusinessId, phoneNumberId, token) => {
  * Access: authenticated (GYM_OWNER, STAFF, SUPERADMIN)
  */
 router.get("/status", authenticateToken, async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -347,7 +347,7 @@ router.post(
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
     const { wabaId, phoneNumberId, accessToken, businessId } = req.body;
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
 
     console.log(
       `🔌 [Manual Connect] Connection requested for Gym Slug: "${gymSlug}" | Phone ID: ${phoneNumberId} | WABA ID: ${wabaId}`,
@@ -501,7 +501,7 @@ router.post(
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
     const { code, wabaId, phoneNumberId, businessId } = req.body;
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
 
     console.log(
       `🔌 [Embedded Setup] Request received for Gym Slug: "${gymSlug}" | Phone ID: ${phoneNumberId} | WABA ID: ${wabaId}`,
@@ -706,7 +706,7 @@ router.post(
   authenticateToken,
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     console.log(`🔌 [Disconnect] Request received for Gym Slug: "${gymSlug}"`);
 
     try {
@@ -766,7 +766,7 @@ router.post(
   authenticateToken,
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     console.log(`🔌 [Refresh Status] Refresh requested for Gym: "${gymSlug}"`);
 
     try {
@@ -862,7 +862,7 @@ router.post(
   authenticateToken,
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     console.log(
       `🔌 [Reverify] Re-verification requested for Gym: "${gymSlug}"`,
     );
@@ -954,7 +954,7 @@ router.post(
   authenticateToken,
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     console.log(
       `🔌 [Register Code] Requesting registration code for Gym: "${gymSlug}" via ${DEFAULT_CODE_METHOD}`,
     );
@@ -1031,7 +1031,7 @@ router.post(
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
     const { code } = req.body;
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
 
     console.log(
       `🔌 [Verify Code] Verification code validation submitted for Gym: "${gymSlug}"`,
@@ -1149,7 +1149,7 @@ router.post(
   authenticateToken,
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     console.log(
       `🔌 [Sync Templates] Template synchronization requested for Gym: "${gymSlug}"`,
     );
@@ -1253,7 +1253,7 @@ router.get(
   authenticateToken,
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
 
     try {
       const gym = await prisma.gym.findUnique({
@@ -1305,7 +1305,7 @@ router.post(
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   upload.single("profile_picture"),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
 
     try {
       const gym = await prisma.gym.findUnique({
@@ -1408,7 +1408,7 @@ router.post(
   authenticateToken,
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     const { displayName } = req.body;
     const idempotencyKey = req.headers["idempotency-key"] || null;
 
@@ -1526,7 +1526,7 @@ router.get(
   authenticateToken,
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
 
     try {
       const gym = await prisma.gym.findUnique({
@@ -1561,7 +1561,7 @@ router.post(
   authenticateToken,
   requireRoles(["STAFF", "GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     const { to, sdp } = req.body;
 
     if (!to || !sdp) {
@@ -1633,7 +1633,7 @@ router.post(
   authenticateToken,
   requireRoles(["STAFF", "GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     const { callId } = req.body;
 
     if (!callId) {
@@ -1695,7 +1695,7 @@ router.post(
   authenticateToken,
   requireRoles(["STAFF", "GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     const { callId, sdp } = req.body;
 
     if (!callId || !sdp) {
@@ -1761,7 +1761,7 @@ router.post(
   authenticateToken,
   requireRoles(["STAFF", "GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     const { memberId } = req.body;
 
     if (!memberId) {

@@ -11,7 +11,7 @@ const router = Router({ mergeParams: true });
  * =====================================
  */
 router.get("/", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -67,7 +67,7 @@ router.get("/", async (req, res) => {
  * =====================================
  */
 router.post("/", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
   const { name, description, price, durationDays } = req.body;
 
   if (!name || price === undefined || !durationDays) {
@@ -107,7 +107,8 @@ router.post("/", async (req, res) => {
  * =====================================
  */
 router.put("/:planId", async (req, res) => {
-  const { gymSlug, planId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { planId } = req.params;
   const { name, description, price, durationDays } = req.body;
 
   if (!name || price === undefined || !durationDays) {
@@ -253,7 +254,8 @@ router.put("/:planId", async (req, res) => {
  * =====================================
  */
 router.delete("/:planId", async (req, res) => {
-  const { gymSlug, planId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { planId } = req.params;
 
   try {
     const gym = await prisma.gym.findUnique({

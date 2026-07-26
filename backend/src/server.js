@@ -61,14 +61,14 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/auth/webauthn", webauthnRouter);
 app.use("/api/users", usersRouter);
-app.use("/api/dashboard/:gymSlug/whatsapp/templates", authenticateToken, scopeToGym, whatsappTemplatesRouter);
-app.use("/api/dashboard/:gymSlug/whatsapp", authenticateToken, scopeToGym, whatsappRouter);
-app.use("/api/dashboard/:gymSlug/inbox", authenticateToken, scopeToGym, inboxRouter);
-app.use("/api/dashboard/:gymSlug/members", authenticateToken, scopeToGym, membersRouter);
-app.use("/api/dashboard/:gymSlug/plans", authenticateToken, scopeToGym, plansRouter);
-app.use("/api/dashboard/:gymSlug/payments", authenticateToken, scopeToGym, paymentsRouter);
-app.use("/api/dashboard/:gymSlug/analytics", authenticateToken, scopeToGym, analyticsRouter);
-app.use("/api/media/:gymSlug", authenticateToken, scopeToGym, mediaRouter);
+app.use("/api/dashboard/whatsapp/templates", authenticateToken, scopeToGym, whatsappTemplatesRouter);
+app.use("/api/dashboard/whatsapp", authenticateToken, scopeToGym, whatsappRouter);
+app.use("/api/dashboard/inbox", authenticateToken, scopeToGym, inboxRouter);
+app.use("/api/dashboard/members", authenticateToken, scopeToGym, membersRouter);
+app.use("/api/dashboard/plans", authenticateToken, scopeToGym, plansRouter);
+app.use("/api/dashboard/payments", authenticateToken, scopeToGym, paymentsRouter);
+app.use("/api/dashboard/analytics", authenticateToken, scopeToGym, analyticsRouter);
+app.use("/api/media", authenticateToken, scopeToGym, mediaRouter);
 app.use("/uploads", express.static("uploads"));
 app.use("/webhook", whatsappWebhookRouter);
 

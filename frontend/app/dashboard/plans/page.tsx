@@ -26,7 +26,7 @@ interface PlanData {
 }
 
 export default function PlansPage() {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
   const [plans, setPlans] = useState<PlanData[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PlanData | null>(null);
@@ -42,7 +42,7 @@ export default function PlansPage() {
   const fetchPlans = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/plans`);
+      const res = await fetch(`/api/dashboard/plans`);
       if (res.ok) {
         const data = await res.json();
         setPlans(data.plans || []);
@@ -56,7 +56,7 @@ export default function PlansPage() {
 
   useEffect(() => {
     fetchPlans();
-  }, [gymSlug]);
+  }, []);
 
   const resetForm = () => {
     setIsAdding(false);
@@ -88,7 +88,7 @@ export default function PlansPage() {
     setError('');
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/plans`, {
+      const res = await fetch(`/api/dashboard/plans`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +119,7 @@ export default function PlansPage() {
     setError('');
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/plans/${editingPlan.id}`, {
+      const res = await fetch(`/api/dashboard/plans/${editingPlan.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -148,7 +148,7 @@ export default function PlansPage() {
     e.stopPropagation(); // Prevent card selection on delete click
     if (!confirm('Are you sure you want to delete this membership plan? This action cannot be undone.')) return;
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/plans/${planId}`, {
+      const res = await fetch(`/api/dashboard/plans/${planId}`, {
         method: 'DELETE',
       });
       if (res.ok) {

@@ -5,7 +5,7 @@ import { Send, Bot, User, MessageCircle, AlertTriangle } from 'lucide-react';
 
 interface ChatTakeoverProps {
   gymId: string;
-  gymSlug: string;
+  
 }
 
 interface ActiveChatMember {
@@ -24,7 +24,7 @@ interface ChatLogMessage {
   createdAt: string;
 }
 
-export default function ChatTakeover({ gymId, gymSlug }: ChatTakeoverProps) {
+export default function ChatTakeover({ gymId }: ChatTakeoverProps) {
   const [activeChats, setActiveChats] = useState<ActiveChatMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<ActiveChatMember | null>(null);
   const [messages, setMessages] = useState<ChatLogMessage[]>([]);
@@ -35,7 +35,7 @@ export default function ChatTakeover({ gymId, gymSlug }: ChatTakeoverProps) {
   // Fetch all active chats
   const fetchActiveChats = async () => {
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members`);
+      const res = await fetch(`/api/dashboard/members`);
       if (res.ok) {
         const data = await res.json();
         setActiveChats(data.members || []);
@@ -50,7 +50,7 @@ export default function ChatTakeover({ gymId, gymSlug }: ChatTakeoverProps) {
 
   const fetchChatMessages = async (memberId: string) => {
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members/${memberId}/messages`);
+      const res = await fetch(`/api/dashboard/members/${memberId}/messages`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages || []);
@@ -62,7 +62,7 @@ export default function ChatTakeover({ gymId, gymSlug }: ChatTakeoverProps) {
 
   useEffect(() => {
     fetchActiveChats();
-  }, [gymSlug]);
+  }, []);
 
   useEffect(() => {
     if (selectedMember) {
@@ -88,7 +88,7 @@ export default function ChatTakeover({ gymId, gymSlug }: ChatTakeoverProps) {
     const newBotState = !selectedMember.isBotDisabled;
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members/${selectedMember.id}/toggle-bot`, {
+      const res = await fetch(`/api/dashboard/members/${selectedMember.id}/toggle-bot`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isBotDisabled: newBotState }),
@@ -119,7 +119,7 @@ export default function ChatTakeover({ gymId, gymSlug }: ChatTakeoverProps) {
     setInputText('');
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/live-chat/send`, {
+      const res = await fetch(`/api/dashboard/live-chat/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

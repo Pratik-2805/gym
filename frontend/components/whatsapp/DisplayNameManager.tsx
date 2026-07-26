@@ -5,12 +5,12 @@ import { toast } from "react-toastify";
 import { Edit2, RefreshCcw, Info, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 
 interface DisplayNameManagerProps {
-  gymSlug: string;
+  
   config: any;
   onRefresh: (force?: boolean) => Promise<void>;
 }
 
-export default function DisplayNameManager({ gymSlug, config, onRefresh }: DisplayNameManagerProps) {
+export default function DisplayNameManager({  config, onRefresh }: DisplayNameManagerProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [newName, setNewName] = useState("");
@@ -22,12 +22,12 @@ export default function DisplayNameManager({ gymSlug, config, onRefresh }: Displ
     if (config.connected) {
       loadHistory();
     }
-  }, [config.connected, gymSlug]);
+  }, [config.connected]);
 
   async function loadHistory() {
     setLoadingHistory(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/display-name/history`);
+      const res = await fetch(`/api/dashboard/whatsapp/display-name/history`);
       if (res.ok) {
         const data = await res.json();
         setHistory(data);
@@ -49,7 +49,7 @@ export default function DisplayNameManager({ gymSlug, config, onRefresh }: Displ
       }, 30000);
       return () => clearInterval(interval);
     }
-  }, [config.connected, history, gymSlug]);
+  }, [config.connected, history]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -57,7 +57,7 @@ export default function DisplayNameManager({ gymSlug, config, onRefresh }: Displ
 
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/display-name`, {
+      const res = await fetch(`/api/dashboard/whatsapp/display-name`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ displayName: newName }),

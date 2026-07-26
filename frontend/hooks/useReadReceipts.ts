@@ -18,11 +18,11 @@ export function useReadReceipts({
   onMarkAsRead,
   messagesLength,
 }: UseReadReceiptsProps) {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
 
   // Join conversation + mark read
   useEffect(() => {
-    if (!conversationId || !gymSlug) return;
+    if (!conversationId) return;
 
     connectSocket();
     const socket = getSocket();
@@ -34,7 +34,7 @@ export function useReadReceipts({
       readSentRef.current.add(conversationId);
 
       try {
-        await api.post(`/api/dashboard/${gymSlug}/inbox/${conversationId}/mark-read`);
+        await api.post(`/api/dashboard/inbox/${conversationId}/mark-read`);
         onMarkAsRead?.(conversationId);
       } catch {
         readSentRef.current.delete(conversationId);
@@ -50,23 +50,23 @@ export function useReadReceipts({
       socket.emit("leave-conversation", conversationId);
       document.removeEventListener("visibilitychange", maybeMarkRead);
     };
-  }, [conversationId, onMarkAsRead, readSentRef, gymSlug]);
+  }, [conversationId, onMarkAsRead, readSentRef]);
 
   // Re-mark read when new messages arrive
   useEffect(() => {
-    if (!conversationId || !gymSlug) return;
+    if (!conversationId) return;
     if (document.visibilityState !== "visible") return;
 
     if (!readSentRef.current.has(conversationId)) {
       requestAnimationFrame(async () => {
         try {
           readSentRef.current.add(conversationId);
-          await api.post(`/api/dashboard/${gymSlug}/inbox/${conversationId}/mark-read`);
+          await api.post(`/api/dashboard/inbox/${conversationId}/mark-read`);
           onMarkAsRead?.(conversationId);
         } catch {
           readSentRef.current.delete(conversationId);
         }
       });
     }
-  }, [messagesLength, conversationId, onMarkAsRead, readSentRef, gymSlug]);
+  }, [messagesLength, conversationId, onMarkAsRead, readSentRef]);
 }

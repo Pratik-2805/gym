@@ -5,13 +5,9 @@ import DashboardShell from '@/components/dashboard/DashboardShell';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  params: Promise<{ gymSlug: string }>;
 }
 
-export default async function DashboardLayout(props: DashboardLayoutProps) {
-  const params = await props.params;
-  const { children } = props;
-
+export default async function DashboardLayout({ children }: DashboardLayoutProps) {
   console.log("📂 [DashboardLayout] Awaiting auth/me fetch...");
   // Retrieve current user and gym details from Express Backend
   const res = await fetchBackend('/api/auth/me');
@@ -26,18 +22,15 @@ export default async function DashboardLayout(props: DashboardLayoutProps) {
 
   console.log("📂 [DashboardLayout] activeUser:", JSON.stringify(activeUser));
   console.log("📂 [DashboardLayout] gym:", JSON.stringify(gym));
-  console.log("📂 [DashboardLayout] params.gymSlug:", params.gymSlug);
 
   // Enforce tenant scoping and access check
-  const decodedGymSlug = decodeURIComponent(params.gymSlug).toLowerCase();
-  console.log("📂 [DashboardLayout] decodedGymSlug:", decodedGymSlug);
-  if (!gym || (activeUser.role !== 'SUPERADMIN' && gym.slug.toLowerCase() !== decodedGymSlug)) {
-    console.log("📂 [DashboardLayout] Scoping failed! gym.slug:", gym?.slug, "decodedGymSlug:", decodedGymSlug, "redirecting to /login");
+  if (!gym && activeUser.role !== 'SUPERADMIN') {
+    console.log("📂 [DashboardLayout] User has no gym, redirecting to /login");
     redirect('/login');
   }
 
   return (
-    <DashboardShell gym={gym} activeUser={activeUser} gymSlug={params.gymSlug}>
+    <DashboardShell gym={gym} activeUser={activeUser}>
       {children}
     </DashboardShell>
   );
