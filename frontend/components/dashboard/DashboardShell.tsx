@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ThemeToggle from '@/components/dashboard/ThemeToggle';
+import PasskeyManager from '@/components/dashboard/PasskeyManager';
 import {
   Dumbbell,
   Users,
@@ -17,6 +18,7 @@ import {
   FileText,
   PanelLeftClose,
   PanelLeftOpen,
+  LayoutDashboard,
 } from 'lucide-react';
 import { connectSocket, getSocket } from '@/lib/socket';
 import CallModal from '@/components/inbox/callModal';
@@ -73,6 +75,7 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
   }, [gym?.id, incomingCall?.callId]);
 
   const sidebarLinks = [
+    { label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4 shrink-0" />, href: `/dashboard/${gymSlug}/dashboard` },
     { label: 'Members', icon: <Users className="h-4 w-4 shrink-0" />, href: `/dashboard/${gymSlug}/members` },
     { label: 'Plans', icon: <CreditCard className="h-4 w-4 shrink-0" />, href: `/dashboard/${gymSlug}/plans` },
     { label: 'Payments', icon: <CheckSquare className="h-4 w-4 shrink-0" />, href: `/dashboard/${gymSlug}/payments` },
@@ -123,31 +126,128 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
           )}
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 flex flex-col space-y-1 px-3 py-4 overflow-y-auto overflow-x-hidden bg-transparent w-full min-h-[300px]">
-          {sidebarLinks.map((link) => {
-            const isActive = pathname.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                title={isCollapsed ? link.label : undefined}
-                className={`flex items-center rounded-xl py-3 text-xs font-semibold transition-all duration-300 ${
-                  isCollapsed ? 'justify-center px-0' : 'px-4'
-                } ${
-                  isActive 
-                    ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]' 
-                    : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-100 border border-transparent'
-                }`}
-              >
-                {link.icon}
-                <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>
-                  {link.label}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Navigation Items (with flip card container) */}
+        <div className="flex-1 relative sidebar-perspective w-full min-h-[300px]">
+          <div className={`sidebar-flipper ${isFlipped ? 'sidebar-flipped' : ''}`}>
+            
+            {/* FRONT FACE (standard navigation menu) */}
+            <nav className="sidebar-front flex flex-col space-y-1 px-3 py-4 overflow-y-auto overflow-x-hidden bg-transparent">
+              {sidebarLinks.map((link) => {
+                const isActive = pathname.startsWith(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    title={isCollapsed ? link.label : undefined}
+                    className={`flex items-center rounded-xl py-3 text-xs font-semibold transition-all duration-300 ${
+                      isCollapsed ? 'justify-center px-0' : 'px-4'
+                    } ${
+                      isActive 
+                        ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]' 
+                        : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-100 border border-transparent'
+                    }`}
+                  >
+                    {link.icon}
+                    <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>
+                      {link.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* BACK FACE (Customize Gym settings form) */}
+            <div className="sidebar-back bg-zinc-950 p-5 flex flex-col justify-between overflow-y-auto border-t border-b border-zinc-900">
+              <div className="space-y-6">
+                <div className="border-b border-zinc-900 pb-3">
+                  <h3 className="text-sm font-extrabold text-white">Customize Gym</h3>
+                  <p className="text-[10px] text-zinc-500 mt-1">Configure your workspace branding</p>
+                </div>
+
+                <div className="space-y-4 text-xs">
+                  {/* Gym Name Input */}
+                  <div>
+                    <label className="block font-bold text-zinc-400 mb-1.5 uppercase tracking-wider text-[10px]">Gym Name</label>
+                    <input 
+                      type="text"
+                      value={tempGymName}
+                      onChange={(e) => setTempGymName(e.target.value)}
+                      placeholder="e.g. fit"
+                      className="w-full rounded-xl border border-zinc-805 bg-zinc-900 px-3 py-2 text-zinc-100 focus:outline-none focus:border-cyan-500 placeholder-zinc-650"
+                    />
+                  </div>
+
+                  {/* Gym Logo Upload Input */}
+                  <div>
+                    <label className="block font-bold text-zinc-400 mb-1.5 uppercase tracking-wider text-[10px]">Gym Logo Image</label>
+                    
+                    {tempGymLogo && (
+                      <div className="mb-2.5 flex items-center gap-2 bg-zinc-900/60 p-2 rounded-xl border border-zinc-805">
+                        <img src={tempGymLogo} alt="Preview" className="h-8 w-8 object-contain rounded-md" />
+                        <span className="text-[10px] text-zinc-500 truncate flex-1">Logo image selected</span>
+                        <button 
+                          type="button" 
+                          onClick={() => setTempGymLogo(null)}
+                          className="text-rose-400 hover:text-rose-300 font-semibold cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        id="brand-logo-file-flip-nav"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              if (event.target?.result) {
+                                setTempGymLogo(event.target.result as string);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <label 
+                        htmlFor="brand-logo-file-flip-nav"
+                        className="flex-1 text-center py-2.5 rounded-xl border border-dashed border-zinc-805 bg-zinc-900/30 hover:bg-zinc-900/60 cursor-pointer text-zinc-400 hover:text-zinc-300 transition-colors font-semibold"
+                      >
+                        Upload Logo
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Passkey / Security section */}
+              <div className="border-t border-zinc-900 mt-6 pt-5">
+                <PasskeyManager compact />
+              </div>
+
+              <div className="flex gap-3 text-xs border-t border-zinc-900 pt-4 mt-5">
+                <button
+                  onClick={() => handleSaveSettings(tempGymName, tempGymLogo)}
+                  className="flex-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 py-3 font-bold text-white transition-colors cursor-pointer"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setIsFlipped(false)}
+                  className="flex-1 rounded-xl border border-zinc-805 hover:bg-zinc-900 py-3 font-bold text-zinc-400 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
 
         {/* Bottom Profile Details */}
         <div className={`border-t border-zinc-805 transition-all duration-300 bg-zinc-950/40 ${isCollapsed ? 'flex flex-col items-center gap-4 p-2 py-4' : 'p-4'}`}>
