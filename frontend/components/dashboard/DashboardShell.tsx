@@ -38,40 +38,12 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
 
   const [gymName, setGymName] = useState(gym?.name || 'fit');
   const [gymLogo, setGymLogo] = useState<string | null>(null);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [tempGymName, setTempGymName] = useState(gym?.name || 'fit');
-  const [tempGymLogo, setTempGymLogo] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedName = localStorage.getItem('fitflow_gym_name');
-    const savedLogo = localStorage.getItem('fitflow_gym_logo');
-    if (savedName !== null) {
-      setGymName(savedName);
-    } else if (gym?.name) {
+    if (gym?.name) {
       setGymName(gym.name);
     }
-    if (savedLogo !== null) setGymLogo(savedLogo);
   }, [gym?.name]);
-
-  const openProfileModal = () => {
-    setTempGymName(gymName);
-    setTempGymLogo(gymLogo);
-    setIsCollapsed(false);
-    setIsFlipped(true);
-  };
-
-  const handleSaveSettings = (newName: string, newLogo: string | null) => {
-    const nameVal = newName.trim() || gym?.name || 'fit';
-    setGymName(nameVal);
-    setGymLogo(newLogo);
-    localStorage.setItem('fitflow_gym_name', nameVal);
-    if (newLogo) {
-      localStorage.setItem('fitflow_gym_logo', newLogo);
-    } else {
-      localStorage.removeItem('fitflow_gym_logo');
-    }
-    setIsFlipped(false);
-  };
 
   // Global Inbound Call State
   const [incomingCall, setIncomingCall] = useState<any>(null);
@@ -279,9 +251,8 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
 
         {/* Bottom Profile Details */}
         <div className={`border-t border-zinc-805 transition-all duration-300 bg-zinc-950/40 ${isCollapsed ? 'flex flex-col items-center gap-4 p-2 py-4' : 'p-4'}`}>
-          <button
-            onClick={openProfileModal}
-            className={`flex items-center transition-all duration-300 hover:bg-zinc-800/35 p-1.5 rounded-xl cursor-pointer w-full text-left ${isCollapsed ? 'mb-0 justify-center' : 'mb-4'}`}
+          <div
+            className={`flex items-center p-1.5 rounded-xl w-full text-left ${isCollapsed ? 'mb-0 justify-center' : 'mb-4'}`}
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-950 border border-cyan-800 text-cyan-400 font-extrabold text-xs shrink-0" title={activeUser.name}>
               {activeUser.name.substring(0, 2).toUpperCase()}
@@ -292,7 +263,7 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
                 <UserCheck className="h-2.5 w-2.5 text-cyan-400 shrink-0" /> {activeUser.role}
               </span>
             </div>
-          </button>
+          </div>
 
           <form action="/api/auth/logout" method="POST" className={isCollapsed ? 'w-full flex justify-center' : 'w-full'}>
             <button
