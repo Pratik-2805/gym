@@ -10,7 +10,7 @@ const router = Router({ mergeParams: true });
  * =====================================
  */
 router.get("/", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -53,7 +53,7 @@ router.get("/", async (req, res) => {
  * =====================================
  */
 router.post("/", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
   const { name, memberName, phone, address, emergencyContact, planId, startDate, endDate } = req.body;
   const actualName = name || memberName;
 
@@ -160,7 +160,8 @@ router.post("/", async (req, res) => {
  */
 router.get("/:memberId/messages", async (req, res) => {
   try {
-    const { gymSlug, memberId } = req.params;
+    const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
     const messages = await prisma.notification.findMany({
       where: {
         memberId,
@@ -182,7 +183,8 @@ router.get("/:memberId/messages", async (req, res) => {
  */
 router.post("/:memberId/toggle-bot", async (req, res) => {
   try {
-    const { gymSlug, memberId } = req.params;
+    const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
     const { isBotDisabled } = req.body;
 
     const member = await prisma.member.update({
@@ -216,7 +218,8 @@ router.post("/:memberId/toggle-bot", async (req, res) => {
  */
 router.put("/:memberId", async (req, res) => {
   try {
-    const { gymSlug, memberId } = req.params;
+    const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
     const { name, phone, address, emergencyContact, planId, startDate, endDate } = req.body;
 
     if (!name || !phone) {
@@ -325,7 +328,8 @@ router.put("/:memberId", async (req, res) => {
  */
 router.delete("/:memberId", async (req, res) => {
   try {
-    const { gymSlug, memberId } = req.params;
+    const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
 
     const gym = await prisma.gym.findUnique({
       where: { slug: gymSlug.toLowerCase() },
@@ -369,7 +373,7 @@ router.delete("/:memberId", async (req, res) => {
  * =====================================
  */
 router.post("/bulk", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
   const { members } = req.body;
 
   if (!Array.isArray(members) || members.length === 0) {

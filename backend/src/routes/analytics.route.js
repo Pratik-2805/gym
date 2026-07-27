@@ -9,7 +9,7 @@ const router = Router({ mergeParams: true });
  * =====================================
  */
 router.get("/", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
 
   try {
     // 1. Fetch the gym matching the slug

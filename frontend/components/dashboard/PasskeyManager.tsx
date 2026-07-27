@@ -36,13 +36,16 @@ export default function PasskeyManager({ compact = false }: PasskeyManagerProps)
     try {
       const res = await fetch('/api/auth/webauthn/credentials', { credentials: 'same-origin' });
       if (!res.ok) {
-        throw new Error('Failed to load registered passkeys');
+        const errText = await res.text().catch(() => 'No response text');
+        console.warn('Failed to load registered passkeys. Status:', res.status, errText);
+        setPasskeys([]);
+        setLoading(false);
+        return;
       }
       const data = await res.json();
       setPasskeys(data || []);
     } catch (err: any) {
-      console.error(err);
-      toast.error('Could not load credentials list.');
+      console.warn('Network or parsing error in fetchPasskeys:', err);
     } finally {
       setLoading(false);
     }

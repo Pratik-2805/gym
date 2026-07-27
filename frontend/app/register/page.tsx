@@ -96,7 +96,7 @@ export default function RegisterPage() {
 
       if (verifyData.success) {
         if (registeredGymSlug) {
-          router.push(`/dashboard/${registeredGymSlug}/dashboard`);
+          router.push(`/dashboard`);
         } else {
           router.push('/login');
         }

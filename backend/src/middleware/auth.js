@@ -31,7 +31,6 @@ export async function authenticateToken(req, res, next) {
  * Middleware to enforce strict gym-level tenant scoping.
  */
 export async function scopeToGym(req, res, next) {
-  const { gymSlug } = req.params;
   const user = req.user;
 
   if (!user) {
@@ -46,19 +45,17 @@ export async function scopeToGym(req, res, next) {
     return res.status(403).json({ error: 'Forbidden: User not associated with a gym' });
   }
 
-  // Fetch the gym using the slug in the URL parameter
+  // Fetch the gym using the user's gymId
   const gym = await prisma.gym.findUnique({
-    where: { slug: gymSlug.toLowerCase() },
+    where: { id: user.gymId },
   });
 
   if (!gym) {
     return res.status(404).json({ error: 'Gym not found' });
   }
 
-  // Ensure user's gymId matches the actual gym
-  if (user.gymId !== gym.id) {
-    return res.status(403).json({ error: 'Forbidden: You do not have access to this gym' });
-  }
+  // Attach gym to request
+  req.gym = gym;
 
   next();
 }

@@ -5,7 +5,7 @@ import { Send, Phone, UserPlus, Check, RefreshCw } from 'lucide-react';
 
 interface SimulatorProps {
   gymId: string;
-  gymSlug: string;
+  
 }
 
 interface SimulatedMember {
@@ -21,7 +21,7 @@ interface ChatMessage {
   createdAt: string;
 }
 
-export default function Simulator({ gymId, gymSlug }: SimulatorProps) {
+export default function Simulator({ gymId }: SimulatorProps) {
   const [members, setMembers] = useState<SimulatedMember[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -39,7 +39,7 @@ export default function Simulator({ gymId, gymSlug }: SimulatorProps) {
   // Fetch members of this gym
   const fetchMembers = async () => {
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members`);
+      const res = await fetch(`/api/dashboard/members`);
       if (res.ok) {
         const data = await res.json();
         setMembers(data.members || []);
@@ -57,7 +57,7 @@ export default function Simulator({ gymId, gymSlug }: SimulatorProps) {
     if (!memberId) return;
     setIsRefreshing(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members/${memberId}/messages`);
+      const res = await fetch(`/api/dashboard/members/${memberId}/messages`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages || []);
@@ -71,7 +71,7 @@ export default function Simulator({ gymId, gymSlug }: SimulatorProps) {
 
   useEffect(() => {
     fetchMembers();
-  }, [gymSlug]);
+  }, []);
 
   useEffect(() => {
     if (selectedMemberId) {
@@ -107,7 +107,7 @@ export default function Simulator({ gymId, gymSlug }: SimulatorProps) {
     ]);
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/simulate`, {
+      const res = await fetch(`/api/dashboard/whatsapp/simulate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -137,7 +137,7 @@ export default function Simulator({ gymId, gymSlug }: SimulatorProps) {
     }
 
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members`, {
+      const res = await fetch(`/api/dashboard/members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

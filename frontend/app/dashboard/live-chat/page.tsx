@@ -5,13 +5,13 @@ import { useParams } from 'next/navigation';
 import ChatTakeover from '@/components/dashboard/ChatTakeover';
 
 export default function LiveChatPage() {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
   const [gymId, setGymId] = useState('');
 
   useEffect(() => {
     const fetchGymInfo = async () => {
       try {
-        const res = await fetch(`/api/dashboard/${gymSlug}/chatbot`);
+        const res = await fetch(`/api/dashboard/chatbot`);
         if (res.ok) {
           const data = await res.json();
           setGymId(data.chatbotSettings?.gymId || '');
@@ -21,7 +21,7 @@ export default function LiveChatPage() {
       }
     };
     fetchGymInfo();
-  }, [gymSlug]);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -33,7 +33,7 @@ export default function LiveChatPage() {
 
       {/* Takeover Shell */}
       {gymId ? (
-        <ChatTakeover gymId={gymId} gymSlug={gymSlug} />
+        <ChatTakeover gymId={gymId}  />
       ) : (
         <div className="flex h-64 items-center justify-center text-xs text-zinc-500 bg-zinc-950/40 rounded-2xl border border-zinc-800">
           Loading live takeover console...

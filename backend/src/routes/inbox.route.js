@@ -58,7 +58,7 @@ const router = Router({ mergeParams: true });
  * =====================================
  */
 router.get("/", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -191,7 +191,8 @@ router.get("/", async (req, res) => {
  * =====================================
  */
 router.get("/:memberId", async (req, res) => {
-  const { gymSlug, memberId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -313,7 +314,8 @@ router.get("/:memberId", async (req, res) => {
  * =====================================
  */
 router.post("/:memberId/mark-read", async (req, res) => {
-  const { gymSlug, memberId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -409,7 +411,8 @@ router.post("/:memberId/mark-read", async (req, res) => {
  * =====================================
  */
 router.post("/:memberId/send", async (req, res) => {
-  const { gymSlug, memberId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
   const { text } = req.body;
 
   if (!text || !text.trim()) {
@@ -527,7 +530,8 @@ router.post("/:memberId/send", async (req, res) => {
  * =====================================
  */
 router.post("/:memberId/toggle-bot", async (req, res) => {
-  const { gymSlug, memberId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
   const { isBotDisabled } = req.body;
 
   if (typeof isBotDisabled !== "boolean") {
@@ -598,7 +602,8 @@ router.post("/:memberId/toggle-bot", async (req, res) => {
  * =====================================
  */
 router.delete("/messages/:messageId", async (req, res) => {
-  const { gymSlug, messageId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { messageId } = req.params;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -658,7 +663,7 @@ router.delete("/messages/:messageId", async (req, res) => {
  * =====================================
  */
 router.post("/check-number", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
   const { phoneNumber } = req.body;
 
   if (!phoneNumber) {
@@ -717,7 +722,7 @@ router.post("/check-number", async (req, res) => {
  * =====================================
  */
 router.post("/create-conversation", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
   const { phoneNumber, memberName } = req.body;
 
   if (!phoneNumber) {
@@ -792,7 +797,7 @@ router.post("/create-conversation", async (req, res) => {
  * =====================================
  */
 router.get("/blocked", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -847,7 +852,8 @@ router.get("/blocked", async (req, res) => {
  * =====================================
  */
 router.post("/:memberId/block", async (req, res) => {
-  const { gymSlug, memberId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -941,7 +947,8 @@ router.post("/:memberId/block", async (req, res) => {
  * =====================================
  */
 router.post("/:memberId/unblock", async (req, res) => {
-  const { gymSlug, memberId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -1035,7 +1042,8 @@ router.post("/:memberId/unblock", async (req, res) => {
  * =====================================
  */
 router.post("/:memberId/send-template", async (req, res) => {
-  const { gymSlug, memberId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
   const { templateId, bodyVariables = [] } = req.body;
 
   if (!templateId) {
@@ -1352,7 +1360,8 @@ router.post("/:memberId/send-template", async (req, res) => {
  * =====================================
  */
 router.post("/:memberId/send-media", upload.single("file"), async (req, res) => {
-  const { gymSlug, memberId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
   const { caption } = req.body;
   const file = req.file;
 

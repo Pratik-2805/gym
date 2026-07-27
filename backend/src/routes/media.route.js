@@ -9,7 +9,8 @@ const META_API_VERSION = process.env.META_API_VERSION || "v19.0";
 
 // GET /api/media/:gymSlug/:mediaId
 router.get("/:mediaId", async (req, res) => {
-  const { gymSlug, mediaId } = req.params;
+  const gymSlug = req.gym.slug;
+  const { mediaId } = req.params;
 
   try {
     const gym = await prisma.gym.findUnique({
