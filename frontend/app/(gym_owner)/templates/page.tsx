@@ -510,7 +510,7 @@ export default function MessageTemplatesPage() {
               To submit templates to Meta for approval, you must first connect and verify your WhatsApp Business Account.
             </p>
             <button
-              onClick={() => router.push(`/dashboard/settings`)}
+              onClick={() => router.push(`/settings`)}
               className="text-[10px] text-cyan-400 font-bold hover:underline flex items-center gap-1 mt-1.5"
             >
               Configure WhatsApp now <ChevronRight className="h-3 w-3" />

@@ -111,7 +111,7 @@ export default function RegisterPage() {
 
   const handleSkipOnboarding = () => {
     if (registeredGymSlug) {
-      router.push(`/dashboard/${registeredGymSlug}/dashboard`);
+      router.push(`/dashboard`);
     } else {
       router.push('/login');
     }

@@ -79,18 +79,18 @@ export default function DashboardShell({ children, gym, activeUser }: DashboardS
 
   const sidebarLinks = [
     { label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4 shrink-0" />, href: `/dashboard` },
-    { label: 'Members', icon: <Users className="h-4 w-4 shrink-0" />, href: `/dashboard/members` },
-    { label: 'Plans', icon: <CreditCard className="h-4 w-4 shrink-0" />, href: `/dashboard/plans` },
-    { label: 'Payments', icon: <CheckSquare className="h-4 w-4 shrink-0" />, href: `/dashboard/payments` },
-    { label: 'Chatbot', icon: <Bot className="h-4 w-4 shrink-0" />, href: `/dashboard/chatbot` },
-    { label: 'Inbox', icon: <MessageCircle className="h-4 w-4 shrink-0" />, href: `/dashboard/inbox` },
-    { label: 'Templates', icon: <FileText className="h-4 w-4 shrink-0" />, href: `/dashboard/templates` },
+    { label: 'Members', icon: <Users className="h-4 w-4 shrink-0" />, href: `/members` },
+    { label: 'Plans', icon: <CreditCard className="h-4 w-4 shrink-0" />, href: `/plans` },
+    { label: 'Payments', icon: <CheckSquare className="h-4 w-4 shrink-0" />, href: `/payments` },
+    { label: 'Chatbot', icon: <Bot className="h-4 w-4 shrink-0" />, href: `/chatbot` },
+    { label: 'Inbox', icon: <MessageCircle className="h-4 w-4 shrink-0" />, href: `/inbox` },
+    { label: 'Templates', icon: <FileText className="h-4 w-4 shrink-0" />, href: `/templates` },
     { 
       label: 'Settings', 
       icon: <Settings className="h-4 w-4 shrink-0" />, 
       subLinks: [
-        { label: 'General', href: `/dashboard/settings/general` },
-        { label: 'WhatsApp Setup', href: `/dashboard/settings/whatsapp` }
+        { label: 'General', href: `/settings/general` },
+        { label: 'WhatsApp Setup', href: `/settings/whatsapp` }
       ]
     },
   ];

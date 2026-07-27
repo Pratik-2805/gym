@@ -108,7 +108,7 @@ export default function LoginPage() {
         if (data.user.role === 'SUPERADMIN') {
           router.push('/superadmin');
         } else if (data.user.gym) {
-          router.push(`/dashboard/dashboard`);
+          router.push(`/dashboard`);
         } else {
           setError('User profile not associated with a gym tenant.');
         }
