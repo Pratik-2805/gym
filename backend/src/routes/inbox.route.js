@@ -35,6 +35,13 @@ const parseMessageText = (rawText) => {
           caption: parsed.caption
         };
       }
+      if (parsed.isTemplate) {
+        return {
+          content: parsed.content,
+          isTemplate: true,
+          template: parsed.template
+        };
+      }
     } catch (e) {
       // Not JSON or parse failed
     }
@@ -253,7 +260,8 @@ router.get("/:memberId", async (req, res) => {
         caption: parsed.caption,
         direction: m.direction.toLowerCase(),
         status: m.status.toLowerCase(),
-        createdAt: m.createdAt
+        createdAt: m.createdAt,
+        template: parsed.template
       };
     });
 
@@ -1234,6 +1242,65 @@ router.post("/:memberId/send-template", async (req, res) => {
       });
     }
 
+    // Resolve Header details for DB storage
+    let headerPayload = null;
+    if (headerComp && headerComp.format !== "NONE") {
+      if (headerComp.format === "TEXT") {
+        headerPayload = {
+          type: "TEXT",
+          text: headerComp.text
+        };
+      } else {
+        const fileInfo = headerComp.example;
+        let s3Url = "";
+        if (fileInfo) {
+          if (fileInfo.local_filename) {
+            s3Url = `/uploads/templates/${fileInfo.local_filename}`;
+          } else if (Array.isArray(fileInfo.header_handle) && fileInfo.header_handle[0]) {
+            s3Url = fileInfo.header_handle[0];
+          }
+        }
+        headerPayload = {
+          type: headerComp.format, // IMAGE, VIDEO, DOCUMENT
+          mediaUrl: s3Url
+        };
+      }
+    }
+
+    // Resolve Footer
+    const footerComp = componentsRaw.find((c) => c.type === "FOOTER");
+    const footerText = footerComp ? footerComp.text : null;
+
+    // Resolve Buttons
+    const buttonsComp = componentsRaw.find((c) => c.type === "BUTTONS");
+    let templateButtons = [];
+    if (buttonsComp && Array.isArray(buttonsComp.buttons)) {
+      templateButtons = buttonsComp.buttons.map((b) => ({
+        type: b.type,
+        text: b.text,
+        value: b.url || b.phone_number || undefined
+      }));
+    }
+
+    const templatePayload = {
+      header: headerPayload,
+      body: {
+        type: "TEXT",
+        text: content
+      },
+      footer: footerText,
+      buttons: templateButtons
+    };
+
+    const textPayload = JSON.stringify({
+      isTemplate: true,
+      templateId: template.id,
+      templateName: template.templateName,
+      bodyVariables,
+      content: content,
+      template: templatePayload
+    });
+
     // Save message to DB
     const savedMessage = await prisma.whatsAppMessage.create({
       data: {
@@ -1241,16 +1308,23 @@ router.post("/:memberId/send-template", async (req, res) => {
         messageId,
         senderPhone: gym.whatsappDisplayPhoneNumber || "system",
         recipientPhone: member.phone,
-        text: content,
+        text: textPayload,
         direction: "OUTBOUND",
         status: "SENT"
       }
     });
 
+    const parsedText = parseMessageText(savedMessage.text);
+
     const mappedMsg = {
       id: savedMessage.id,
       whatsappMessageId: savedMessage.messageId,
-      content: savedMessage.text,
+      content: parsedText.content,
+      text: parsedText.content,
+      mediaUrl: parsedText.mediaUrl,
+      mimeType: parsedText.mimeType,
+      caption: parsedText.caption,
+      template: parsedText.template,
       direction: "outbound",
       status: "sent",
       createdAt: savedMessage.createdAt

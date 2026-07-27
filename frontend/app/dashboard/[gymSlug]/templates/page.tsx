@@ -1721,7 +1721,7 @@ function renderComponentSummary(componentsJson: any): React.ReactNode {
               ))}
             </div>
           )}
-        </div>
+      </div>
       </div>
       </div>
     </div>

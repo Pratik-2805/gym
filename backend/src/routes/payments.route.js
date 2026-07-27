@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
       include: {
         member: {
           select: {
-            name: true,
+            memberName: true,
             phone: true
           }
         },

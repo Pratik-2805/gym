@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ThemeToggle from '@/components/dashboard/ThemeToggle';
+import PasskeyManager from '@/components/dashboard/PasskeyManager';
 import {
   Dumbbell,
   Users,
@@ -17,6 +18,7 @@ import {
   FileText,
   PanelLeftClose,
   PanelLeftOpen,
+  LayoutDashboard,
 } from 'lucide-react';
 import { connectSocket, getSocket } from '@/lib/socket';
 import CallModal from '@/components/inbox/callModal';
@@ -101,6 +103,7 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
   }, [gym?.id, incomingCall?.callId]);
 
   const sidebarLinks = [
+    { label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4 shrink-0" />, href: `/dashboard/${gymSlug}/dashboard` },
     { label: 'Members', icon: <Users className="h-4 w-4 shrink-0" />, href: `/dashboard/${gymSlug}/members` },
     { label: 'Plans', icon: <CreditCard className="h-4 w-4 shrink-0" />, href: `/dashboard/${gymSlug}/plans` },
     { label: 'Payments', icon: <CheckSquare className="h-4 w-4 shrink-0" />, href: `/dashboard/${gymSlug}/payments` },
@@ -250,7 +253,12 @@ export default function DashboardShell({ children, gym, activeUser, gymSlug }: D
                 </div>
               </div>
 
-              <div className="flex gap-3 text-xs border-t border-zinc-900 pt-4 mt-6">
+              {/* Passkey / Security section */}
+              <div className="border-t border-zinc-900 mt-6 pt-5">
+                <PasskeyManager compact />
+              </div>
+
+              <div className="flex gap-3 text-xs border-t border-zinc-900 pt-4 mt-5">
                 <button
                   onClick={() => handleSaveSettings(tempGymName, tempGymLogo)}
                   className="flex-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 py-3 font-bold text-white transition-colors cursor-pointer"

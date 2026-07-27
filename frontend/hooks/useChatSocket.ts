@@ -54,6 +54,7 @@ export function useChatSocket({
         sender: msg.sender || (msg.direction === "outbound" ? "executive" : "customer"),
         timestamp: msg.timestamp || msg.createdAt || new Date().toISOString(),
         status: msg.status || "delivered",
+        template: msg.template,
       };
 
       setMessages((prev) => {
