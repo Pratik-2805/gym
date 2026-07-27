@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { startRegistration } from '@simplewebauthn/browser';
 import {
   Users,
@@ -74,7 +74,8 @@ interface PaymentModeDistribution {
 }
 
 export default function DashboardPage() {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  const router = useRouter();
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMounted, setIsMounted] = useState(false);
@@ -91,7 +92,7 @@ export default function DashboardPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/analytics`);
+      const res = await fetch(`/api/dashboard/analytics`);
       if (!res.ok) {
         throw new Error('Failed to load dashboard data.');
       }
@@ -128,7 +129,7 @@ export default function DashboardPage() {
         })
         .catch((err) => console.error('Error fetching credentials for banner:', err));
     }
-  }, [gymSlug]);
+  }, []);
 
   const handleDismissBanner = () => {
     localStorage.setItem('dismiss_passkey_prompt', 'true');
@@ -391,7 +392,7 @@ export default function DashboardPage() {
 
               <div className="grid grid-cols-2 gap-3.5">
                 <button
-                  onClick={() => router.push(`/dashboard/${gymSlug}/members`)}
+                  onClick={() => router.push(`/dashboard/members`)}
                   className="group flex flex-col justify-between p-3.5 rounded-xl border border-zinc-900 bg-zinc-950/30 text-left transition-all hover:border-cyan-500/30 hover:bg-cyan-500/5 hover:-translate-y-0.5"
                 >
                   <Users className="h-4.5 w-4.5 text-cyan-400 mb-2 group-hover:scale-110 transition-transform" />
@@ -402,7 +403,7 @@ export default function DashboardPage() {
                 </button>
 
                 <button
-                  onClick={() => router.push(`/dashboard/${gymSlug}/plans`)}
+                  onClick={() => router.push(`/dashboard/plans`)}
                   className="group flex flex-col justify-between p-3.5 rounded-xl border border-zinc-900 bg-zinc-950/30 text-left transition-all hover:border-emerald-500/30 hover:bg-emerald-500/5 hover:-translate-y-0.5"
                 >
                   <Plus className="h-4.5 w-4.5 text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
@@ -413,7 +414,7 @@ export default function DashboardPage() {
                 </button>
 
                 <button
-                  onClick={() => router.push(`/dashboard/${gymSlug}/payments`)}
+                  onClick={() => router.push(`/dashboard/payments`)}
                   className="group flex flex-col justify-between p-3.5 rounded-xl border border-zinc-900 bg-zinc-950/30 text-left transition-all hover:border-orange-500/30 hover:bg-orange-500/5 hover:-translate-y-0.5"
                 >
                   <CreditCard className="h-4.5 w-4.5 text-orange-400 mb-2 group-hover:scale-110 transition-transform" />
@@ -424,7 +425,7 @@ export default function DashboardPage() {
                 </button>
 
                 <button
-                  onClick={() => router.push(`/dashboard/${gymSlug}/chatbot`)}
+                  onClick={() => router.push(`/dashboard/chatbot`)}
                   className="group flex flex-col justify-between p-3.5 rounded-xl border border-zinc-900 bg-zinc-950/30 text-left transition-all hover:border-violet-500/30 hover:bg-violet-500/5 hover:-translate-y-0.5"
                 >
                   <Bot className="h-4.5 w-4.5 text-violet-400 mb-2 group-hover:scale-110 transition-transform" />
@@ -461,7 +462,7 @@ export default function DashboardPage() {
                 <p className="text-xs text-zinc-500">Latest 5 members registered</p>
               </div>
               <button 
-                onClick={() => router.push(`/dashboard/${gymSlug}/members`)}
+                onClick={() => router.push(`/dashboard/members`)}
                 className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-0.5 group transition-colors"
               >
                 View All <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />

@@ -14,7 +14,6 @@
     "@simplewebauthn/browser": "^13.3.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/qrcode": "^1.5.6",
     "@types/three": "^0.184.1",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.40.0",
@@ -23,7 +22,6 @@
     "next": "^16.2.7",
     "papaparse": "^5.5.4",
     "prisma": "^7.8.0",
-    "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-toastify": "^11.1.0",
@@ -48,10 +46,10 @@
   },
   "allowScripts": {
     "@google/genai@2.7.0": true,
-    "@prisma/engines@7.8.0": true,
-    "prisma@7.8.0": true,
-    "protobufjs@7.6.4": true,
     "sharp@0.34.5": true,
-    "unrs-resolver@1.12.2": true
+    "unrs-resolver@1.12.2": true,
+    "prisma@7.9.0": true,
+    "protobufjs@7.6.5": true,
+    "@prisma/engines@7.9.0": true
   }
 }

@@ -19,7 +19,7 @@ export function useInboxSocket({
   setConversations,
   mapApiConversation,
 }: UseInboxSocketProps) {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
 
   useEffect(() => {
     connectSocket();
@@ -27,8 +27,8 @@ export function useInboxSocket({
 
     const refreshInbox = async () => {
       try {
-        if (!gymSlug) return;
-        const res = await api.get(`/api/dashboard/${gymSlug}/inbox`);
+        
+        const res = await api.get(`/api/dashboard/inbox`);
         const mapped = res.data.map(mapApiConversation);
 
         setConversations(() =>
@@ -72,5 +72,5 @@ export function useInboxSocket({
       socket.off("connect", refreshInbox);
       socket.off("member:updated", handleMemberUpdate);
     };
-  }, [selectedConversation, readSentRef, setConversations, mapApiConversation, gymSlug]);
+  }, [selectedConversation, readSentRef, setConversations, mapApiConversation]);
 }

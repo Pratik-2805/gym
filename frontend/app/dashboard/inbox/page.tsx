@@ -163,7 +163,7 @@ function ChatArea({
   onToggleBlock?: (conversationId: string, isBlocked: boolean) => Promise<void>;
   onBlockedStatusChange?: (isBlocked: boolean) => void;
 }) {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
   const [inputValue, setInputValue] = useState("");
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -185,7 +185,7 @@ function ChatArea({
 
   const fetchPlans = async () => {
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/plans`);
+      const res = await fetch(`/api/dashboard/plans`);
       if (res.ok) {
         const data = await res.json();
         setPlans(data.plans || []);
@@ -213,7 +213,7 @@ function ChatArea({
     setIsSubmitting(true);
     setModalError("");
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/members/${conversation.id}/memberships`, {
+      const res = await fetch(`/api/dashboard/members/${conversation.id}/memberships`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -313,7 +313,7 @@ function ChatArea({
   useEffect(() => {
     if (mediaModal?.type === "template") {
       api
-        .get(`/api/dashboard/${gymSlug}/whatsapp/templates`)
+        .get(`/api/dashboard/whatsapp/templates`)
         .then((res) => {
           const approved = res.data.filter(
             (t: any) => t.status === "APPROVED" || t.status === "approved",
@@ -322,14 +322,14 @@ function ChatArea({
         })
         .catch((err) => console.error("Failed to load templates", err));
     }
-  }, [mediaModal?.type, gymSlug]);
+  }, [mediaModal?.type]);
 
   const handleSendTemplate = async () => {
     if (!selectedTemplate || isSendingTemplate) return;
 
     setIsSendingTemplate(true);
     try {
-      await api.post(`/api/dashboard/${gymSlug}/inbox/${conversation.id}/send-template`, {
+      await api.post(`/api/dashboard/inbox/${conversation.id}/send-template`, {
         templateId: selectedTemplate.id,
         bodyVariables: templateVariables.map(
           (v) => v.trim() || "Valued Member",
@@ -388,7 +388,7 @@ function ChatArea({
           form.append("caption", imagePreview.caption);
         }
 
-        const res = await fetch(`/api/dashboard/${gymSlug}/inbox/${conversation.id}/send-media`, {
+        const res = await fetch(`/api/dashboard/inbox/${conversation.id}/send-media`, {
           method: "POST",
           body: form,
         });
@@ -443,7 +443,7 @@ function ChatArea({
     setImagePreview(null);
 
     try {
-      await api.post(`/api/dashboard/${gymSlug}/inbox/${conversation.id}/send`, {
+      await api.post(`/api/dashboard/inbox/${conversation.id}/send`, {
         text,
       });
       requestAnimationFrame(() => inputRef.current?.focus());
@@ -457,7 +457,7 @@ function ChatArea({
 
   const handleDeleteMessage = async (message: Message) => {
     try {
-      await api.delete(`/api/dashboard/${gymSlug}/inbox/messages/${message.id}`);
+      await api.delete(`/api/dashboard/inbox/messages/${message.id}`);
       setMessages((prev) => prev.filter((m) => m.id !== message.id));
       toast.success("Message deleted");
     } catch (err) {
@@ -478,7 +478,7 @@ function ChatArea({
         onCallClick={() => setIsCallModalOpen(true)}
         onRequestCallPermission={async () => {
           try {
-            const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/call/request-permission`, {
+            const res = await fetch(`/api/dashboard/whatsapp/call/request-permission`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ memberId: conversation.id }),
@@ -507,7 +507,7 @@ function ChatArea({
         conversationId={conversation.id}
         recipientName={conversation.memberName}
         recipientPhone={conversation.phone}
-        gymSlug={gymSlug}
+        
       />
 
       {/* MESSAGES WRAPPER */}
@@ -575,7 +575,7 @@ function ChatArea({
               const form = new FormData();
               form.append("file", file);
 
-              const res = await fetch(`/api/dashboard/${gymSlug}/inbox/${conversation.id}/send-media`, {
+              const res = await fetch(`/api/dashboard/inbox/${conversation.id}/send-media`, {
                 method: "POST",
                 body: form,
               });
@@ -734,7 +734,7 @@ function ChatArea({
 }
 
 export default function InboxPage() {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -750,7 +750,7 @@ export default function InboxPage() {
 
   const loadInbox = async () => {
     try {
-      const res = await api.get(`/api/dashboard/${gymSlug}/inbox`);
+      const res = await api.get(`/api/dashboard/inbox`);
       setConversations(res.data.map(mapApiConversation));
     } catch (err) {
       console.error("❌ Failed to load inbox", err);
@@ -777,7 +777,7 @@ export default function InboxPage() {
     setShowChat(true);
 
     try {
-      const res = await api.get(`/api/dashboard/${gymSlug}/inbox/${id}`);
+      const res = await api.get(`/api/dashboard/inbox/${id}`);
 
       const mappedMessages: Message[] = res.data.messages.map((m: any) => ({
         id: m.id,
@@ -842,7 +842,7 @@ export default function InboxPage() {
       }
     };
     init();
-  }, [gymSlug, chatId]);
+  }, [ chatId]);
 
   const handleUpdateConversationStatus = (
     conversationId: string,
@@ -869,7 +869,7 @@ export default function InboxPage() {
 
   const handleToggleBlock = async (conversationId: string, isBlocked: boolean) => {
     try {
-      const endpoint = `/api/dashboard/${gymSlug}/inbox/${conversationId}/${isBlocked ? "unblock" : "block"}`;
+      const endpoint = `/api/dashboard/inbox/${conversationId}/${isBlocked ? "unblock" : "block"}`;
       await api.post(endpoint);
 
       setConversations((prev) =>

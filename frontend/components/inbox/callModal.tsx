@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  gymSlug: string;
+  
   conversationId: string;
   recipientName: string;
   recipientPhone: string;
@@ -27,7 +27,6 @@ export default function CallModal({
   conversationId,
   recipientName,
   recipientPhone,
-  gymSlug,
   isInbound = false,
   inboundCallId,
   inboundSdp,
@@ -213,7 +212,7 @@ export default function CallModal({
       if (!finalSdp) throw new Error("Failed to generate SDP offer");
 
       // 4. Send API request
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/call/initiate`, {
+      const res = await fetch(`/api/dashboard/whatsapp/call/initiate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to: recipientPhone, sdp: finalSdp }),
@@ -259,7 +258,7 @@ export default function CallModal({
       if (!finalSdp) throw new Error("Failed to generate SDP answer");
 
       // 5. Send API request to accept
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/call/accept`, {
+      const res = await fetch(`/api/dashboard/whatsapp/call/accept`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ callId: inboundCallId, sdp: finalSdp }),
@@ -303,7 +302,7 @@ export default function CallModal({
     setCallStatus("ENDED");
     if (callId) {
       try {
-        await fetch(`/api/dashboard/${gymSlug}/whatsapp/call/terminate`, {
+        await fetch(`/api/dashboard/whatsapp/call/terminate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ callId }),

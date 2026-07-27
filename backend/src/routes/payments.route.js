@@ -9,7 +9,7 @@ const router = Router({ mergeParams: true });
  * =====================================
  */
 router.get("/", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
 
   try {
     const gym = await prisma.gym.findUnique({
@@ -58,7 +58,7 @@ router.get("/", async (req, res) => {
  * =====================================
  */
 router.post("/", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
   const { transactionId, action, reason } = req.body;
 
   if (!transactionId || !action) {

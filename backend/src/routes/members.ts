@@ -11,7 +11,7 @@ router.use(scopeToGym);
 // GET /api/dashboard/:gymSlug/members
 router.get('/', async (req: RequestWithUser, res: Response): Promise<any> => {
   try {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
 
     const gym = await db.gym.findUnique({
       where: { slug: gymSlug },
@@ -46,7 +46,7 @@ router.get('/', async (req: RequestWithUser, res: Response): Promise<any> => {
 // POST /api/dashboard/:gymSlug/members
 router.post('/', async (req: RequestWithUser, res: Response): Promise<any> => {
   try {
-    const { gymSlug } = req.params;
+    const gymSlug = req.gym.slug;
     const session = req.user!;
 
     const gym = await db.gym.findUnique({
@@ -133,7 +133,8 @@ router.post('/', async (req: RequestWithUser, res: Response): Promise<any> => {
 // GET /api/dashboard/:gymSlug/members/:memberId/messages
 router.get('/:memberId/messages', async (req: RequestWithUser, res: Response): Promise<any> => {
   try {
-    const { gymSlug, memberId } = req.params;
+    const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
 
     const messages = await db.notification.findMany({
       where: {
@@ -153,7 +154,8 @@ router.get('/:memberId/messages', async (req: RequestWithUser, res: Response): P
 // POST /api/dashboard/:gymSlug/members/:memberId/toggle-bot
 router.post('/:memberId/toggle-bot', async (req: RequestWithUser, res: Response): Promise<any> => {
   try {
-    const { gymSlug, memberId } = req.params;
+    const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
     const session = req.user!;
     const { isBotDisabled } = req.body;
 
@@ -189,7 +191,8 @@ router.post('/:memberId/toggle-bot', async (req: RequestWithUser, res: Response)
 // PUT /api/dashboard/:gymSlug/members/:memberId
 router.put('/:memberId', async (req: RequestWithUser, res: Response): Promise<any> => {
   try {
-    const { gymSlug, memberId } = req.params;
+    const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
     const session = req.user!;
 
     const gym = await db.gym.findUnique({
@@ -273,7 +276,8 @@ router.put('/:memberId', async (req: RequestWithUser, res: Response): Promise<an
 // DELETE /api/dashboard/:gymSlug/members/:memberId
 router.delete('/:memberId', async (req: RequestWithUser, res: Response): Promise<any> => {
   try {
-    const { gymSlug, memberId } = req.params;
+    const gymSlug = req.gym.slug;
+  const { memberId } = req.params;
     const session = req.user!;
 
     const gym = await db.gym.findUnique({

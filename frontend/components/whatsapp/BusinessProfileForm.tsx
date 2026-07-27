@@ -53,7 +53,7 @@ const VERTICALS = [
   { value: "TRAVEL", label: "Travel and Transportation" },
 ];
 
-export default function BusinessProfileForm({ gymSlug }: { gymSlug: string }) {
+export default function BusinessProfileForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<BusinessProfile>({
@@ -70,12 +70,12 @@ export default function BusinessProfileForm({ gymSlug }: { gymSlug: string }) {
 
   useEffect(() => {
     fetchProfile();
-  }, [gymSlug]);
+  }, []);
 
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/business-profile`);
+      const res = await fetch(`/api/dashboard/whatsapp/business-profile`);
       if (res.ok) {
         const data = await res.json();
         setProfile({
@@ -122,7 +122,7 @@ export default function BusinessProfileForm({ gymSlug }: { gymSlug: string }) {
         formData.append("profile_picture", profilePictureFile);
       }
 
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/business-profile`, {
+      const res = await fetch(`/api/dashboard/whatsapp/business-profile`, {
         method: "POST",
         body: formData,
       });

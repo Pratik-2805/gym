@@ -117,7 +117,7 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function MessageTemplatesPage() {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
   const router = useRouter();
 
   // Connection & settings details
@@ -210,7 +210,7 @@ export default function MessageTemplatesPage() {
   // ----------------------------------------------------
   const fetchStatus = async () => {
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/status`);
+      const res = await fetch(`/api/dashboard/whatsapp/status`);
       if (res.ok) {
         const data = await res.json();
         setIsConnected(data.connected);
@@ -231,7 +231,7 @@ export default function MessageTemplatesPage() {
   const fetchTemplates = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/templates`);
+      const res = await fetch(`/api/dashboard/whatsapp/templates`);
       if (res.ok) {
         const data = await res.json();
         setTemplates(data);
@@ -249,7 +249,7 @@ export default function MessageTemplatesPage() {
   useEffect(() => {
     fetchStatus();
     fetchTemplates();
-  }, [gymSlug]);
+  }, []);
 
   // ----------------------------------------------------
   // TEMPLATE CRUD & META SUBMISSIONS
@@ -257,7 +257,7 @@ export default function MessageTemplatesPage() {
   const handleSyncAllTemplates = async () => {
     setSyncingAll(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/sync-templates`, {
+      const res = await fetch(`/api/dashboard/whatsapp/sync-templates`, {
         method: 'POST',
       });
       const data = await res.json();
@@ -278,7 +278,7 @@ export default function MessageTemplatesPage() {
   const handleSubmitToMeta = async (templateId: string) => {
     setActionInProgressId(templateId);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/templates/${templateId}/submit`, {
+      const res = await fetch(`/api/dashboard/whatsapp/templates/${templateId}/submit`, {
         method: 'POST',
       });
       const data = await res.json();
@@ -299,7 +299,7 @@ export default function MessageTemplatesPage() {
   const handleSyncTemplateStatus = async (templateId: string) => {
     setActionInProgressId(templateId);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/templates/${templateId}/sync-status`, {
+      const res = await fetch(`/api/dashboard/whatsapp/templates/${templateId}/sync-status`, {
         method: 'POST',
       });
       const data = await res.json();
@@ -323,7 +323,7 @@ export default function MessageTemplatesPage() {
     }
     setActionInProgressId(templateId);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/templates/${templateId}`, {
+      const res = await fetch(`/api/dashboard/whatsapp/templates/${templateId}`, {
         method: 'DELETE',
       });
       const data = await res.json();
@@ -378,7 +378,7 @@ export default function MessageTemplatesPage() {
       }));
       formData.append('buttons', JSON.stringify(parsedButtons));
 
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/templates`, {
+      const res = await fetch(`/api/dashboard/whatsapp/templates`, {
         method: 'POST',
         body: formData,
       });
@@ -510,7 +510,7 @@ export default function MessageTemplatesPage() {
               To submit templates to Meta for approval, you must first connect and verify your WhatsApp Business Account.
             </p>
             <button
-              onClick={() => router.push(`/dashboard/${gymSlug}/settings`)}
+              onClick={() => router.push(`/dashboard/settings`)}
               className="text-[10px] text-cyan-400 font-bold hover:underline flex items-center gap-1 mt-1.5"
             >
               Configure WhatsApp now <ChevronRight className="h-3 w-3" />

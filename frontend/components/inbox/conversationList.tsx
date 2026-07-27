@@ -19,7 +19,7 @@ export default function ConversationList({
   onSelect: (id: string) => void;
   onReload?: () => Promise<void>;
 }) {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -70,7 +70,7 @@ export default function ConversationList({
     const timer = setTimeout(async () => {
       setIsChecking(true);
       try {
-        const res = await fetch(`/api/dashboard/${gymSlug}/inbox/check-number`, {
+        const res = await fetch(`/api/dashboard/inbox/check-number`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phoneNumber: searchQuery }),
@@ -90,7 +90,7 @@ export default function ConversationList({
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, conversations, gymSlug]);
+  }, [searchQuery, conversations]);
 
   // Handle creating a new conversation
   const handleStartChat = async () => {
@@ -103,7 +103,7 @@ export default function ConversationList({
         setSearchQuery("");
         setWhatsappCheckResult(null);
       } else {
-        const res = await fetch(`/api/dashboard/${gymSlug}/inbox/create-conversation`, {
+        const res = await fetch(`/api/dashboard/inbox/create-conversation`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

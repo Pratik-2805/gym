@@ -35,7 +35,7 @@ const upload = multer({ storage });
  * =====================================
  */
 router.get("/", async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
   console.log(`🔌 [Templates GET] Fetching templates for Gym Slug: "${gymSlug}"`);
 
   try {
@@ -66,7 +66,7 @@ router.get("/", async (req, res) => {
  * =====================================
  */
 router.post("/", upload.single("headerFile"), async (req, res) => {
-  const { gymSlug } = req.params;
+  const gymSlug = req.gym.slug;
   const { name, category, language, body, footer, buttons } = req.body;
 
   console.log(`🔌 [Templates POST] Submitting template "${name}" for Gym: "${gymSlug}"`);
@@ -391,7 +391,8 @@ router.post("/", upload.single("headerFile"), async (req, res) => {
  * =====================================
  */
 router.post("/:id/submit", async (req, res) => {
-  const { gymSlug, id } = req.params;
+  const gymSlug = req.gym.slug;
+  const { id } = req.params;
   console.log(`🔌 [Templates SUBMIT] Submitting template ID ${id} for Gym Slug: "${gymSlug}"`);
 
   try {
@@ -568,7 +569,8 @@ router.post("/:id/submit", async (req, res) => {
  * =====================================
  */
 router.post("/:id/sync-status", async (req, res) => {
-  const { gymSlug, id } = req.params;
+  const gymSlug = req.gym.slug;
+  const { id } = req.params;
   console.log(`🔌 [Templates SYNC] Checking status for Template ${id}`);
 
   try {
@@ -634,7 +636,8 @@ router.post("/:id/sync-status", async (req, res) => {
  * =====================================
  */
 router.delete("/:id", async (req, res) => {
-  const { gymSlug, id } = req.params;
+  const gymSlug = req.gym.slug;
+  const { id } = req.params;
   console.log(`🔌 [Templates DELETE] Removing template ID ${id}`);
 
   try {

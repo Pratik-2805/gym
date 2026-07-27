@@ -39,7 +39,7 @@ declare global {
 }
 
 export default function WhatsAppSetupPage() {
-  const { gymSlug } = useParams() as { gymSlug: string };
+  
 
   // Helper to extract nested Meta errors
   async function parseError(res: Response, defaultMessage: string): Promise<string> {
@@ -133,7 +133,7 @@ export default function WhatsAppSetupPage() {
   async function loadStatus(forceMetaCheck: boolean = false) {
     try {
       const query = forceMetaCheck ? "?forceMetaCheck=true" : "";
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/status${query}`);
+      const res = await fetch(`/api/dashboard/whatsapp/status${query}`);
       if (!res.ok) {
         throw new Error("Failed to load WhatsApp status");
       }
@@ -150,7 +150,7 @@ export default function WhatsAppSetupPage() {
 
   useEffect(() => {
     loadStatus();
-  }, [gymSlug]);
+  }, []);
 
   /* ================= FACEBOOK SDK ================= */
 
@@ -248,7 +248,7 @@ export default function WhatsAppSetupPage() {
         ...form,
         businessId: form.businessId || form.wabaId,
       };
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/connect`, {
+      const res = await fetch(`/api/dashboard/whatsapp/connect`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -280,7 +280,7 @@ export default function WhatsAppSetupPage() {
     }
     setSaving(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/disconnect`, {
+      const res = await fetch(`/api/dashboard/whatsapp/disconnect`, {
         method: "POST",
       });
       if (!res.ok) {
@@ -302,7 +302,7 @@ export default function WhatsAppSetupPage() {
   async function handleRefreshStatus() {
     setRefreshing(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/refresh-status`, {
+      const res = await fetch(`/api/dashboard/whatsapp/refresh-status`, {
         method: "POST",
       });
       if (!res.ok) {
@@ -321,7 +321,7 @@ export default function WhatsAppSetupPage() {
   async function handleReverify() {
     setReverifying(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/reverify`, {
+      const res = await fetch(`/api/dashboard/whatsapp/reverify`, {
         method: "POST",
       });
       if (!res.ok) {
@@ -336,7 +336,7 @@ export default function WhatsAppSetupPage() {
         await loadStatus();
       } else {
         console.log("☎️ Registration retry requested. Initiating Meta request_code...");
-        const regRes = await fetch(`/api/dashboard/${gymSlug}/whatsapp/register`, {
+        const regRes = await fetch(`/api/dashboard/whatsapp/register`, {
           method: "POST",
         });
         if (!regRes.ok) {
@@ -360,7 +360,7 @@ export default function WhatsAppSetupPage() {
     }
     setVerifying(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/verify`, {
+      const res = await fetch(`/api/dashboard/whatsapp/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: verificationCode }),
@@ -385,7 +385,7 @@ export default function WhatsAppSetupPage() {
   async function handleSyncTemplates() {
     setSyncingTemplates(true);
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/sync-templates`, {
+      const res = await fetch(`/api/dashboard/whatsapp/sync-templates`, {
         method: "POST",
       });
       if (!res.ok) {
@@ -448,7 +448,7 @@ export default function WhatsAppSetupPage() {
 
           try {
             setSetupStep("Activating phone number...");
-            const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/embedded-setup`, {
+            const res = await fetch(`/api/dashboard/whatsapp/embedded-setup`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -761,12 +761,12 @@ export default function WhatsAppSetupPage() {
 
             {/* Display Name Management */}
             <div className="mt-8">
-              <DisplayNameManager gymSlug={gymSlug} config={config} onRefresh={loadStatus} />
+              <DisplayNameManager  config={config} onRefresh={loadStatus} />
             </div>
 
             {/* Business Profile */}
             <div className="mt-8">
-              <BusinessProfileForm gymSlug={gymSlug} />
+              <BusinessProfileForm  />
             </div>
 
           </motion.div>
