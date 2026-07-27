@@ -149,7 +149,7 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <h2 className="text-xl font-bold text-white">Enable Biometric Login</h2>
               <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-                Secure your workspace with 1-click **Face ID, Touch ID, or Windows Hello**. You won't need to enter passwords in the future.
+                Secure your workspace with 1-click <strong className="font-bold text-zinc-200">Face ID, Touch ID, or Windows Hello</strong>. You won't need to enter passwords in the future.
               </p>
             </div>
 
