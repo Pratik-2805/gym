@@ -116,6 +116,99 @@ const getStatusBadge = (status: string) => {
   );
 };
 
+const PREDEFINED_TEMPLATES = [
+  {
+    name: "welcome_message",
+    category: "UTILITY",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Hi {{1}}, welcome to {{2}}! We are thrilled to have you. Let us know if you have any questions.",
+    footer: "Welcome to the family",
+  },
+  {
+    name: "plan_price_update",
+    category: "UTILITY",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Hi {{1}}, this is an update regarding your gym membership. The price for the {{2}} plan has been updated to ₹{{3}}. Please contact the front desk if you have any questions.",
+    footer: "Plan Update",
+  },
+  {
+    name: "payment_reminder",
+    category: "UTILITY",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Hi {{1}}, this is a friendly reminder that your payment of ₹{{2}} is due on {{3}}. Please ensure timely payment to avoid interruption of services.",
+    footer: "Payment Reminder",
+  },
+  {
+    name: "membership_expired",
+    category: "UTILITY",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Hi {{1}}, your gym membership expired on {{2}}. Please renew your membership to continue enjoying our facilities.",
+    footer: "Membership Expired",
+  },
+  {
+    name: "class_cancelled",
+    category: "UTILITY",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Hi {{1}}, unfortunately the {{2}} class scheduled for {{3}} has been cancelled. We apologize for the inconvenience.",
+    footer: "Schedule Update",
+  },
+  {
+    name: "birthday_wish",
+    category: "MARKETING",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Happy Birthday {{1}}! We hope you have a fantastic day. To celebrate, enjoy a free personal training session on us!",
+    footer: "Happy Birthday",
+  },
+  {
+    name: "holiday_closure",
+    category: "UTILITY",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Dear Member, please note that the gym will be closed for {{1}} from {{2}} to {{3}}.",
+    footer: "Holiday Notice",
+  },
+  {
+    name: "special_offer",
+    category: "MARKETING",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Hi {{1}}, we have a special offer for you! Get {{2}} off your next renewal. Use code: {{3}}.",
+    footer: "Special Offer",
+  },
+  {
+    name: "feedback_request",
+    category: "MARKETING",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Hi {{1}}, how are you enjoying your time at the gym? We would love to hear your feedback. Please share your thoughts here: {{2}}",
+    footer: "Feedback Request",
+  },
+  {
+    name: "trainer_absent",
+    category: "UTILITY",
+    language: "en_US",
+    headerType: "NONE",
+    headerText: "",
+    body: "Hi {{1}}, your trainer {{2}} will be absent on {{3}}. Your session will be rescheduled. We apologize for the inconvenience.",
+    footer: "Trainer Update",
+  }
+];
+
 export default function MessageTemplatesPage() {
   
   const router = useRouter();
@@ -177,6 +270,9 @@ export default function MessageTemplatesPage() {
   // Preview Drawer Modal state
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null);
 
+  // Template Library Drawer state
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+
   // Create Template Drawer form state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -192,6 +288,20 @@ export default function MessageTemplatesPage() {
   const [formBody, setFormBody] = useState('');
   const [formFooter, setFormFooter] = useState('');
   const [formButtons, setFormButtons] = useState<FormButton[]>([]);
+
+  const handleUseTemplate = (tpl: any) => {
+    setFormName(tpl.name);
+    setFormCategory(tpl.category);
+    setFormLanguage(tpl.language);
+    setFormHeaderType(tpl.headerType);
+    setFormHeaderText(tpl.headerText);
+    setFormBody(tpl.body);
+    setFormFooter(tpl.footer);
+    setFormButtons([]);
+    setFormHeaderFile(null);
+    setIsLibraryOpen(false);
+    setIsCreateOpen(true);
+  };
 
   useEffect(() => {
     if (!formHeaderFile) {
@@ -486,13 +596,21 @@ export default function MessageTemplatesPage() {
           </button>
 
           <button
+            onClick={() => setIsLibraryOpen(true)}
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
+              currentTheme === 'dark'
+                ? 'neon-btn-secondary'
+                : 'border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-850'
+            }`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Template Library
+          </button>
+
+          <button
             onClick={() => setIsCreateOpen(true)}
             disabled={!isConnected}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-              currentTheme === 'dark'
-                ? 'neon-btn-primary'
-                : 'bg-cyan-600 text-white hover:bg-cyan-500'
-            }`}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 px-4 py-2.5 text-xs font-extrabold text-zinc-950 transition-all hover:from-cyan-400 hover:to-cyan-500 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
             Create Template
@@ -1132,6 +1250,72 @@ export default function MessageTemplatesPage() {
                 </div>
               </motion.div>
             </div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* DRAWER 1.5: TEMPLATE LIBRARY DRAWER                      */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {isLibraryOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsLibraryOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 w-full max-w-2xl bg-zinc-950 border-l border-zinc-800 z-50 flex flex-col shadow-2xl overflow-y-auto"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-zinc-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400">
+                    <LayoutGrid className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Template Library</h2>
+                    <p className="text-sm text-zinc-400">Predefined gym templates to get you started.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsLibraryOpen(false)}
+                  className="p-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 p-6 space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {PREDEFINED_TEMPLATES.map((tpl) => (
+                    <div key={tpl.name} className="border border-zinc-800 bg-zinc-900/50 rounded-xl p-5 flex flex-col gap-3 relative group">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">{tpl.category}</span>
+                          <h3 className="text-base font-bold text-white mt-1 capitalize">{tpl.name.replace(/_/g, ' ')}</h3>
+                        </div>
+                      </div>
+                      <p className="text-sm text-zinc-400 line-clamp-3 leading-relaxed flex-1">
+                        {tpl.body}
+                      </p>
+                      <button
+                        onClick={() => handleUseTemplate(tpl)}
+                        className="mt-2 w-full flex items-center justify-center gap-2 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-cyan-600 hover:text-white"
+                      >
+                        Use Template
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
           </>
         )}
       </AnimatePresence>

@@ -196,7 +196,7 @@ router.put("/:planId", async (req, res) => {
             const templateData = await templateResponse.json();
             let messageId = `temp-${Date.now()}`;
             let status = "SENT";
-            let contentToSave = `Template: plan_price_update\nMember: ${membership.member.memberName || 'Member'}\nPlan: ${updatedPlan.name}\nNew Price: ₹${newPrice}`;
+            let contentToSave = `Hi ${membership.member.memberName || 'Member'}, this is an update regarding your gym membership. The price for the ${updatedPlan.name} plan has been updated to ₹${newPrice}. Please contact the front desk if you have any questions.`;
 
             if (templateResponse.ok && templateData.messages?.[0]?.id) {
                messageId = templateData.messages[0].id;

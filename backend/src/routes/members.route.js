@@ -1,6 +1,7 @@
 import { Router } from "express";
 import prisma from "../prisma.js";
 import { getIO } from "../socket.js";
+import { decrypt } from "../utils/encryption.js";
 
 const router = Router({ mergeParams: true });
 
@@ -64,7 +65,7 @@ router.post("/", async (req, res) => {
   try {
     const gym = await prisma.gym.findUnique({
       where: { slug: gymSlug.toLowerCase() },
-      select: { id: true, name: true }
+      select: { id: true, name: true, whatsapp_access_token: true, whatsapp_phone_number_id: true }
     });
 
     if (!gym) {
@@ -130,6 +131,93 @@ router.post("/", async (req, res) => {
         status: "PENDING",
       },
     });
+
+    // Send WhatsApp template if plan is added and credentials exist
+    if (planId && gym.whatsapp_access_token && gym.whatsapp_phone_number_id) {
+      try {
+        const planData = newMember.memberships?.[0]?.plan;
+        if (planData) {
+          const accessToken = decrypt(gym.whatsapp_access_token);
+          const GRAPH_BASE_URL = process.env.META_GRAPH_BASE_URL || "https://graph.facebook.com";
+          const META_API_VERSION = process.env.META_API_VERSION || "v20.0";
+
+          const templateResponse = await fetch(
+            `${GRAPH_BASE_URL}/${META_API_VERSION}/${gym.whatsapp_phone_number_id}/messages`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                messaging_product: "whatsapp",
+                recipient_type: "individual",
+                to: formattedPhone,
+                type: "template",
+                template: {
+                  name: "new_member_plan",
+                  language: { code: "en_US" },
+                  components: [
+                    {
+                      type: "body",
+                      parameters: [
+                        { type: "text", text: actualName },
+                        { type: "text", text: gym.name },
+                        { type: "text", text: `${planData.name} plan at ₹${planData.price}` }
+                      ]
+                    }
+                  ]
+                }
+              })
+            }
+          );
+
+          const templateData = await templateResponse.json();
+          let messageId = `temp-${Date.now()}`;
+          let status = "SENT";
+          let contentToSave = `Hi ${actualName}, welcome to ${gym.name}! Your membership for the ${planData.name} plan at ₹${planData.price} has been successfully activated.`;
+
+          if (templateResponse.ok && templateData.messages?.[0]?.id) {
+            messageId = templateData.messages[0].id;
+          } else {
+            status = "FAILED";
+            console.error("❌ Meta Template sending failed for new member:", templateData);
+          }
+
+          // Save message to DB
+          const savedMessage = await prisma.whatsAppMessage.create({
+            data: {
+              gymId: gym.id,
+              messageId,
+              senderPhone: gym.whatsapp_phone_number_id || "system",
+              recipientPhone: formattedPhone,
+              text: contentToSave,
+              direction: "OUTBOUND",
+              status
+            }
+          });
+
+          // Emit socket updates
+          try {
+            const mappedMsg = {
+              id: savedMessage.id,
+              whatsappMessageId: savedMessage.messageId,
+              content: savedMessage.text,
+              direction: "outbound",
+              status: status.toLowerCase(),
+              createdAt: savedMessage.createdAt
+            };
+            const io = getIO();
+            io.to(`conversation:${newMember.id}`).emit("message:new", mappedMsg);
+            io.to(`gym:${gym.id}`).emit("inbox:update");
+          } catch (err) {
+            console.error("⚠️ Socket emit failed on new member message:", err);
+          }
+        }
+      } catch (err) {
+        console.error("❌ [Members POST] Error sending WhatsApp template:", err);
+      }
+    }
 
     await prisma.auditLog.create({
       data: {
@@ -346,6 +434,17 @@ router.delete("/:memberId", async (req, res) => {
     if (!member || member.gymId !== gym.id) {
       return res.status(404).json({ error: "Member not found" });
     }
+
+    // Delete all WhatsApp messages associated with this member's phone number
+    await prisma.whatsAppMessage.deleteMany({
+      where: {
+        gymId: gym.id,
+        OR: [
+          { senderPhone: member.phone },
+          { recipientPhone: member.phone }
+        ]
+      }
+    });
 
     await prisma.member.delete({
       where: { id: memberId },
