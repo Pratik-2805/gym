@@ -609,7 +609,10 @@ router.post("/:id/sync-status", async (req, res) => {
     const metaTemplate = statusData.data?.[0];
 
     if (!metaTemplate) {
-      return res.status(404).json({ error: "Template not found on Meta Dashboard." });
+      // Template was deleted from Meta — remove it locally too
+      await prisma.whatsAppTemplate.delete({ where: { id } });
+      console.log(`🗑️ [Templates SYNC] Template "${template.templateName}" no longer on Meta — deleted locally.`);
+      return res.json({ deleted: true, message: "Template was deleted from Meta and has been removed locally." });
     }
 
     const newStatus = metaTemplate.status; // APPROVED / PENDING / REJECTED
@@ -657,11 +660,14 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ error: "Template not found" });
     }
 
-    // Try deleting from Meta if it has been submitted and is active/pending
-    if (template.status !== "draft" && gym.whatsapp_access_token && gym.whatsapp_business_id) {
+    // Try deleting from Meta if it has been submitted, active/pending, or has metaTemplateId
+    if ((template.status !== "draft" || template.metaTemplateId) && gym.whatsapp_access_token && gym.whatsapp_business_id) {
       try {
         const accessToken = decrypt(gym.whatsapp_access_token);
-        const metaDeleteUrl = `${GRAPH_BASE_URL}/${META_API_VERSION}/${gym.whatsapp_business_id}/message_templates?name=${template.templateName}`;
+        let metaDeleteUrl = `${GRAPH_BASE_URL}/${META_API_VERSION}/${gym.whatsapp_business_id}/message_templates?name=${encodeURIComponent(template.templateName)}`;
+        if (template.metaTemplateId) {
+          metaDeleteUrl += `&hsm_id=${encodeURIComponent(template.metaTemplateId)}`;
+        }
 
         console.log(`🔌 [Templates DELETE] Requesting deletion from Meta for name: "${template.templateName}"`);
         const metaRes = await fetch(metaDeleteUrl, {
@@ -671,11 +677,11 @@ router.delete("/:id", async (req, res) => {
           },
         });
 
+        const deleteResponseData = await metaRes.json();
         if (!metaRes.ok) {
-          const deleteErr = await metaRes.json();
-          console.warn(`⚠️ [Templates DELETE] Meta deletion failed (proceeding locally):`, deleteErr);
+          console.warn(`⚠️ [Templates DELETE] Meta deletion failed (proceeding locally):`, deleteResponseData);
         } else {
-          console.log(`✅ [Templates DELETE] Meta deleted template successfully`);
+          console.log(`✅ [Templates DELETE] Meta deleted template successfully:`, deleteResponseData);
         }
       } catch (metaErr) {
         console.error("⚠️ Failed to request deletion on Meta server:", metaErr.message);

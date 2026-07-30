@@ -141,7 +141,7 @@ export default function DashboardShell({ children, gym, activeUser }: DashboardS
           <nav className="flex flex-col space-y-1 px-3 py-4 overflow-y-auto overflow-x-hidden bg-transparent">
             {sidebarLinks.map((link) => {
               const isActive = link.href 
-                ? pathname.startsWith(link.href) 
+                ? (link.href === '/dashboard' ? pathname === link.href : pathname.startsWith(link.href)) 
                 : link.subLinks?.some(sub => pathname.startsWith(sub.href));
                 
               if (link.subLinks) {

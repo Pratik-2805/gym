@@ -14,6 +14,9 @@ CREATE TYPE "PaymentMode" AS ENUM ('MANUAL_UPI', 'RAZORPAY');
 CREATE TYPE "ReminderType" AS ENUM ('EXPIRING_7', 'EXPIRING_3', 'EXPIRING_1', 'EXPIRED_TODAY', 'EXPIRED_3', 'EXPIRED_7');
 
 -- CreateEnum
+CREATE TYPE "WhatsappSessionStatus" AS ENUM ('CONNECTED', 'DISCONNECTED', 'INITIALIZING', 'QR_READY');
+
+-- CreateEnum
 CREATE TYPE "WhatsAppDisplayNameStatus" AS ENUM ('PENDING_REVIEW', 'APPROVED', 'DECLINED', 'REGISTERING', 'REGISTERED', 'REGISTRATION_FAILED');
 
 -- CreateEnum
@@ -95,8 +98,11 @@ CREATE TABLE "Member" (
     "memberName" TEXT,
     "whatsappName" TEXT,
     "phone" TEXT NOT NULL,
+    "email" TEXT,
     "address" TEXT,
+    "dob" TIMESTAMP(3),
     "emergencyContact" TEXT,
+    "notes" TEXT,
     "isBotDisabled" BOOLEAN NOT NULL DEFAULT false,
     "blockedAt" TIMESTAMP(3),
     "callPermissionStatus" "CallPermissionStatus" NOT NULL DEFAULT 'UNKNOWN',
@@ -157,6 +163,18 @@ CREATE TABLE "Transaction" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WhatsappSession" (
+    "id" TEXT NOT NULL,
+    "sessionData" TEXT,
+    "qrCode" TEXT,
+    "status" "WhatsappSessionStatus" NOT NULL DEFAULT 'DISCONNECTED',
+    "gymId" TEXT NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "WhatsappSession_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -314,6 +332,9 @@ CREATE UNIQUE INDEX "GymUser_email_key" ON "GymUser"("email");
 CREATE UNIQUE INDEX "Member_gymId_phone_key" ON "Member"("gymId", "phone");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "WhatsappSession_gymId_key" ON "WhatsappSession"("gymId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "ChatbotSettings_gymId_key" ON "ChatbotSettings"("gymId");
 
 -- CreateIndex
@@ -366,6 +387,9 @@ ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_planId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_gymId_fkey" FOREIGN KEY ("gymId") REFERENCES "Gym"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WhatsappSession" ADD CONSTRAINT "WhatsappSession_gymId_fkey" FOREIGN KEY ("gymId") REFERENCES "Gym"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ChatbotSettings" ADD CONSTRAINT "ChatbotSettings_gymId_fkey" FOREIGN KEY ("gymId") REFERENCES "Gym"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -462,8 +462,27 @@ export default function MessageBubble({
     if (status === "delivered") return <CheckCheck className="w-4 h-4 text-zinc-400" />;
     if (status === "read")
       return <CheckCheck className="w-4 h-4 text-cyan-400" />;
-    if (status === "failed")
-      return <AlertCircle className="w-4 h-4 text-rose-500" />;
+    if (status === "failed") {
+      const errorReason = msg.errorMessage || "Message delivery failed via WhatsApp Meta Cloud API. Check template status or recipient details.";
+      return (
+        <div className="relative group/status inline-flex items-center">
+          <AlertCircle className="w-4 h-4 text-rose-500 cursor-pointer animate-pulse" />
+          
+          {/* Hover Tooltip Popup */}
+          <div className="absolute bottom-full right-0 mb-2.5 hidden group-hover/status:flex flex-col w-64 p-3 bg-zinc-950 border border-rose-500/50 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-[300] pointer-events-none transition-all duration-200">
+            <div className="flex items-center gap-1.5 font-bold text-[11px] text-rose-400 border-b border-rose-500/30 pb-1.5 mb-1.5">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+              <span>Failed to send message</span>
+            </div>
+            <p className="text-[11px] text-zinc-200 leading-relaxed font-sans break-words whitespace-normal select-text">
+              {errorReason}
+            </p>
+            {/* Tooltip triangle arrow pointing down */}
+            <div className="absolute -bottom-1.5 right-1.5 w-3 h-3 bg-zinc-950 border-r border-b border-rose-500/50 rotate-45" />
+          </div>
+        </div>
+      );
+    }
     return null;
   };
 
@@ -632,7 +651,7 @@ export default function MessageBubble({
         `}
       >
         <div
-          className={`group relative shadow-sm overflow-hidden flex flex-col p-0
+          className={`group relative shadow-sm overflow-visible flex flex-col p-0
           ${
             msg.sender === "executive"
               ? "bg-bubble-outbound-bg text-bubble-outbound-text rounded-tr-none rounded-lg rounded-br-lg"
