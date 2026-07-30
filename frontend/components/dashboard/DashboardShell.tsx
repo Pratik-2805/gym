@@ -112,7 +112,7 @@ export default function DashboardShell({ children, gym, activeUser }: DashboardS
           {!isCollapsed ? (
             <>
               <div className="flex items-center overflow-hidden">
-                <Dumbbell className="h-6 w-6 text-cyan-400 shrink-0" />
+                <img src="/app-icon.png" alt="FitFlow Logo" className="h-7 w-7 rounded-lg object-contain shrink-0" />
                 <span className={`text-lg font-black tracking-tight text-zinc-100 uppercase whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[120px] opacity-100 ml-2'}`}>
                   Fit<span className="text-cyan-400">Flow</span>
                 </span>
@@ -130,7 +130,7 @@ export default function DashboardShell({ children, gym, activeUser }: DashboardS
               className="group p-2 rounded-xl text-cyan-400 hover:bg-zinc-800 hover:text-zinc-300 transition-all flex items-center justify-center w-10 h-10"
               title="Expand Sidebar"
             >
-              <Dumbbell className="h-6 w-6 group-hover:hidden" />
+              <img src="/app-icon.png" alt="FitFlow Logo" className="h-7 w-7 rounded-lg object-contain group-hover:hidden" />
               <PanelLeftOpen className="h-5 w-5 hidden group-hover:block" />
             </button>
           )}

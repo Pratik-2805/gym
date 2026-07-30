@@ -5,7 +5,7 @@ import prisma from '../prisma.js';
  * Middleware to authenticate requests via JWT cookie or header.
  */
 export async function authenticateToken(req, res, next) {
-  let token = req.cookies?.auth_token;
+  let token = req.cookies?.auth_token || req.query?.token;
 
   if (!token) {
     const authHeader = req.headers['authorization'];

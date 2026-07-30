@@ -17,6 +17,7 @@ import membersRouter from "./routes/members.route.js";
 import plansRouter from "./routes/plans.route.js";
 import paymentsRouter from "./routes/payments.route.js";
 import analyticsRouter from "./routes/analytics.route.js";
+import chatbotRouter from "./routes/chatbot.route.js";
 import { authenticateToken, scopeToGym } from "./middleware/auth.js";
 import "./lib/queue.js";
 
@@ -67,6 +68,7 @@ app.use("/api/dashboard/inbox", authenticateToken, scopeToGym, inboxRouter);
 app.use("/api/dashboard/members", authenticateToken, scopeToGym, membersRouter);
 app.use("/api/dashboard/plans", authenticateToken, scopeToGym, plansRouter);
 app.use("/api/dashboard/payments", authenticateToken, scopeToGym, paymentsRouter);
+app.use("/api/dashboard/chatbot", authenticateToken, scopeToGym, chatbotRouter);
 app.use("/api/dashboard/analytics", authenticateToken, scopeToGym, analyticsRouter);
 app.use("/api/media", authenticateToken, scopeToGym, mediaRouter);
 app.use("/uploads", express.static("uploads"));

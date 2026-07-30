@@ -136,6 +136,7 @@ router.post('/register', async (req, res) => {
 
     return res.status(201).json({
       success: true,
+      token,
       gym: result.gym,
       user: {
         id: result.user.id,
@@ -197,6 +198,7 @@ router.post('/login', async (req, res) => {
 
     return res.json({
       success: true,
+      token,
       user: {
         id: user.id,
         email: user.email,
