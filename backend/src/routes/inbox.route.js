@@ -261,6 +261,7 @@ router.get("/:memberId", async (req, res) => {
         caption: parsed.caption,
         direction: m.direction.toLowerCase(),
         status: m.status.toLowerCase(),
+        errorMessage: m.errorMessage || null,
         createdAt: m.createdAt,
         template: parsed.template
       };

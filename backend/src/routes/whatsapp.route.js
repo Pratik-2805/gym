@@ -1198,6 +1198,10 @@ router.post(
         console.log(
           `🔌 [Sync Templates] Fetched ${data.data.length} templates. Upserting to local database...`,
         );
+
+        // Collect all template names from Meta
+        const metaTemplateNames = new Set(data.data.map((t) => t.name));
+
         for (const metaTpl of data.data) {
           await prisma.whatsAppTemplate.upsert({
             where: {
@@ -1224,6 +1228,29 @@ router.post(
             },
           });
         }
+
+        // Delete local templates that no longer exist on Meta
+        // Only delete templates that were previously synced (have a metaTemplateId),
+        // so locally-created drafts are preserved.
+        const localTemplates = await prisma.whatsAppTemplate.findMany({
+          where: { gymId: gym.id, metaTemplateId: { not: null } },
+          select: { id: true, templateName: true },
+        });
+
+        const toDelete = localTemplates.filter(
+          (t) => !metaTemplateNames.has(t.templateName),
+        );
+
+        if (toDelete.length > 0) {
+          const deleteIds = toDelete.map((t) => t.id);
+          await prisma.whatsAppTemplate.deleteMany({
+            where: { id: { in: deleteIds } },
+          });
+          console.log(
+            `🗑️ [Sync Templates] Removed ${toDelete.length} template(s) no longer on Meta: ${toDelete.map((t) => t.templateName).join(", ")}`,
+          );
+        }
+
         console.log(
           `💾 [Sync Templates] Database synchronization of templates complete.`,
         );

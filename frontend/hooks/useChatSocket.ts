@@ -73,9 +73,11 @@ export function useChatSocket({
     const handleStatusUpdate = ({
       whatsappMessageId,
       status,
+      errorMessage,
     }: {
       whatsappMessageId: string;
       status?: Message["status"];
+      errorMessage?: string;
     }) => {
       if (!status) return;
 
@@ -83,13 +85,14 @@ export function useChatSocket({
         let updated = prev.map((m) => {
           if (m.whatsappMessageId !== whatsappMessageId) return m;
 
-          if (!m.status) return { ...m, status };
+          const newError = errorMessage || m.errorMessage;
+          if (!m.status) return { ...m, status, ...(newError ? { errorMessage: newError } : {}) };
 
-          if (STATUS_PRIORITY[m.status] >= STATUS_PRIORITY[status]) {
-            return m; // ⛔ ignore downgrade
+          if (STATUS_PRIORITY[m.status] >= STATUS_PRIORITY[status] && status !== "failed") {
+            return m; // ⛔ ignore downgrade unless failed
           }
 
-          return { ...m, status };
+          return { ...m, status, ...(newError ? { errorMessage: newError } : {}) };
         });
 
         const lastMessage = updated[updated.length - 1];

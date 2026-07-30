@@ -521,6 +521,7 @@ router.post("/", async (req, res) => {
               io.to(`conversation:${member.id}`).emit("message:status", {
                 whatsappMessageId: messageId,
                 status: metaState.toLowerCase(),
+                errorMessage: errorMessage || (statusObj.errors?.[0]?.error_data?.details || statusObj.errors?.[0]?.title || null),
               });
             }
             io.to(`gym:${gym.id}`).emit("inbox:update");

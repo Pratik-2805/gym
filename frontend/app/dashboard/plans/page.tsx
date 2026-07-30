@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { CreditCard, Trash2, Plus, Clock, Activity, Search, Edit } from 'lucide-react';
+import { CreditCard, Trash2, Plus, Clock, Activity, Search, Edit, AlertTriangle, BookOpen } from 'lucide-react';
 
 interface MembershipInfo {
   id: string;
@@ -33,6 +34,8 @@ export default function PlansPage() {
   const [viewingPlan, setViewingPlan] = useState<PlanData | null>(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
+  const [hasPriceTemplate, setHasPriceTemplate] = useState<boolean | null>(null);
+  const [checkingTemplate, setCheckingTemplate] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -61,11 +64,35 @@ export default function PlansPage() {
     fetchPlans();
   }, []);
 
+  useEffect(() => {
+    if (showTemplatePreview) {
+      setCheckingTemplate(true);
+      fetch('/api/dashboard/whatsapp/templates')
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            const match = data.some(
+              (t: any) =>
+                t.status === 'APPROVED' &&
+                (t.templateName.toLowerCase().includes('price') ||
+                 t.templateName.toLowerCase().includes('plan_update'))
+            );
+            setHasPriceTemplate(match);
+          } else {
+            setHasPriceTemplate(false);
+          }
+        })
+        .catch(() => setHasPriceTemplate(false))
+        .finally(() => setCheckingTemplate(false));
+    }
+  }, [showTemplatePreview]);
+
   const resetForm = () => {
     setIsAdding(false);
     setEditingPlan(null);
     setViewingPlan(null);
     setShowTemplatePreview(false);
+    setHasPriceTemplate(null);
     setName('');
     setDescription('');
     setPrice('');
@@ -128,6 +155,11 @@ export default function PlansPage() {
 
     if (!showTemplatePreview && newPrice !== editingPlan.price && activeMembersCount > 0) {
       setShowTemplatePreview(true);
+      return;
+    }
+
+    if (hasPriceTemplate === false && newPrice !== editingPlan.price && activeMembersCount > 0) {
+      setError('Cannot update plan price: Approved price_change template is missing. Please create or import it first from Template Library.');
       return;
     }
 
@@ -393,22 +425,65 @@ export default function PlansPage() {
 
             {showTemplatePreview && editingPlan ? (
               <div className="space-y-4 text-xs">
+                {!checkingTemplate && hasPriceTemplate === false && (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 space-y-2.5">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <h4 className="font-bold text-amber-300 text-xs uppercase tracking-wide">Template Missing</h4>
+                        <p className="text-zinc-300 text-xs leading-relaxed">
+                          No approved <code className="bg-zinc-900/80 px-1 py-0.5 rounded text-amber-300 font-mono text-[11px]">price_change</code> template found on Meta. Create or import it first from the Template Library to send automated WhatsApp updates.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-amber-500/20">
+                      <span className="text-[11px] text-zinc-400">Need template?</span>
+                      <Link
+                        href="/dashboard/templates/library"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-500/30 transition-colors"
+                      >
+                        <BookOpen className="h-3.5 w-3.5" /> Template Library
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
                 <div className="bg-cyan-950/20 border border-cyan-800/50 rounded-xl p-4">
                   <p className="text-zinc-300 mb-2">You are changing the price from <strong className="text-white">₹{editingPlan.price}</strong> to <strong className="text-white">₹{price}</strong>.</p>
-                  <p className="text-zinc-300 mb-4">This will automatically send the following WhatsApp message to <strong className="text-white">{editingPlan.memberships?.length || 0} active member{(editingPlan.memberships?.length || 0) !== 1 ? 's' : ''}</strong>:</p>
                   
-                  <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 font-mono text-zinc-400 leading-relaxed shadow-inner">
-                    "Hi [Member Name], this is an update regarding your gym membership. The price for the {name} plan has been updated to ₹{price}. Please contact the front desk if you have any questions."
-                  </div>
+                  {hasPriceTemplate === false ? (
+                    <p className="text-amber-400/90 text-[11px] font-medium mt-1">
+                      ⚠️ Note: WhatsApp notifications will be skipped for this update because no approved <code className="bg-zinc-900 px-1 py-0.5 rounded font-mono">price_change</code> template is available.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-zinc-300 mb-4">
+                        This will automatically send the following WhatsApp message to <strong className="text-white">{editingPlan.memberships?.length || 0} active member{(editingPlan.memberships?.length || 0) !== 1 ? 's' : ''}</strong>:
+                      </p>
+                      
+                      <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 font-mono text-zinc-400 leading-relaxed shadow-inner">
+                        "Hello [Member Name], This is an important update! The price of your current subscription plan [{name}] has been updated to ₹{price}. If you have any questions, feel free to contact us."
+                      </div>
+                    </>
+                  )}
                 </div>
                 
                 <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={(e) => handleUpdatePlan(e)}
-                    className="flex-1 rounded-xl bg-cyan-600 py-3 font-bold text-white hover:bg-cyan-500 transition-all"
-                  >
-                    Confirm & Update
-                  </button>
+                  {hasPriceTemplate !== false ? (
+                    <button
+                      onClick={(e) => handleUpdatePlan(e)}
+                      className="flex-1 rounded-xl bg-cyan-600 py-3 font-bold text-white hover:bg-cyan-500 transition-all"
+                    >
+                      Confirm & Update
+                    </button>
+                  ) : (
+                    <Link
+                      href="/dashboard/templates/library"
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-amber-600 py-3 font-bold text-white hover:bg-amber-500 transition-all text-center"
+                    >
+                      <BookOpen className="h-4 w-4" /> Create Template First
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => setShowTemplatePreview(false)}

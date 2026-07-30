@@ -131,6 +131,7 @@ export interface Message {
   sender: "customer" | "executive";
   timestamp: string;
   status?: "sent" | "delivered" | "read" | "failed" | "received";
+  errorMessage?: string;
 
   template?: {
     templateType?: "standard" | "catalog" | "carousel";
