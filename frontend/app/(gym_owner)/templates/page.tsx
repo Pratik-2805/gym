@@ -344,7 +344,7 @@ export default function MessageTemplatesPage() {
         handleUseTemplate(tpl);
       }
       // Remove query param
-      router.replace("/dashboard/templates", { scroll: false });
+      router.replace("/templates", { scroll: false });
     }
   }, [router]);
 
@@ -669,7 +669,7 @@ export default function MessageTemplatesPage() {
           </button>
 
           <button
-            onClick={() => router.push("/dashboard/templates/library")}
+            onClick={() => router.push("/templates/library")}
             className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
               currentTheme === "dark"
                 ? "neon-btn-secondary"

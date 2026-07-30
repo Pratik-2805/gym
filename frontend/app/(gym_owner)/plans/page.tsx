@@ -439,7 +439,7 @@ export default function PlansPage() {
                     <div className="flex items-center justify-between pt-2 border-t border-amber-500/20">
                       <span className="text-[11px] text-zinc-400">Need template?</span>
                       <Link
-                        href="/dashboard/templates/library"
+                        href="/templates/library"
                         className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-500/30 transition-colors"
                       >
                         <BookOpen className="h-3.5 w-3.5" /> Template Library
@@ -478,7 +478,7 @@ export default function PlansPage() {
                     </button>
                   ) : (
                     <Link
-                      href="/dashboard/templates/library"
+                      href="/templates/library"
                       className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-amber-600 py-3 font-bold text-white hover:bg-amber-500 transition-all text-center"
                     >
                       <BookOpen className="h-4 w-4" /> Create Template First

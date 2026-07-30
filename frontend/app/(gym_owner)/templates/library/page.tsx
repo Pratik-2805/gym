@@ -130,7 +130,7 @@ export default function TemplateLibraryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <Link href="/dashboard/templates" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+            <Link href="/templates" className="text-zinc-500 hover:text-zinc-300 transition-colors">
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h2 className="text-2xl font-extrabold tracking-tight text-zinc-100 sm:text-3xl flex items-center gap-2">
@@ -212,7 +212,7 @@ export default function TemplateLibraryPage() {
               </div>
               <div className="p-4 pt-0 border-t border-zinc-800/0 mt-auto">
                 <button
-                  onClick={() => router.push(`/dashboard/templates?useTemplate=${tpl.name}`)}
+                  onClick={() => router.push(`/templates?useTemplate=${tpl.name}`)}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-cyan-600/10 border border-cyan-500/20 px-4 py-2.5 text-xs font-bold text-cyan-400 transition-all hover:bg-cyan-600 hover:text-white"
                 >
                   Use Template
