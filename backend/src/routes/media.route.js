@@ -7,15 +7,34 @@ const router = express.Router({ mergeParams: true });
 const GRAPH_BASE_URL = "https://graph.facebook.com";
 const META_API_VERSION = process.env.META_API_VERSION || "v19.0";
 
-// GET /api/media/:gymSlug/:mediaId
-router.get("/:mediaId", async (req, res) => {
-  const gymSlug = req.gym.slug;
-  const { mediaId } = req.params;
+// GET /api/media/:mediaId OR /api/media/:gymSlug/:mediaId
+router.get("/:param1/:param2?", async (req, res) => {
+  const mediaId = req.params.param2 || req.params.param1;
+  const gymSlug = req.params.param2 ? req.params.param1 : (req.gym?.slug || req.query.gymSlug);
 
   try {
-    const gym = await prisma.gym.findUnique({
-      where: { slug: gymSlug.toLowerCase() },
-    });
+    // 🛡️ Strict Tenant Isolation (Prevent Cross-Tenant Media IDOR)
+    if (req.user && req.user.role !== "SUPERADMIN" && req.gym) {
+      if (gymSlug && gymSlug.toLowerCase() !== req.gym.slug.toLowerCase()) {
+        console.warn(`🚨 [Security Alert] Blocked cross-tenant media access attempt by User ${req.user.id} for Gym ${gymSlug}`);
+        return res.status(403).json({ error: "Forbidden: Cross-tenant media access not allowed" });
+      }
+    }
+
+    let gym = req.gym;
+    if (!gym && gymSlug) {
+      gym = await prisma.gym.findUnique({
+        where: { slug: gymSlug.toLowerCase() },
+      });
+    }
+
+    if (!gym) {
+      gym = await prisma.gym.findFirst({
+        where: {
+          whatsapp_access_token: { not: null },
+        },
+      });
+    }
 
     if (!gym || !gym.whatsapp_access_token) {
       return res.status(404).json({ error: "Gym or WhatsApp configuration not found" });
@@ -44,25 +63,23 @@ router.get("/:mediaId", async (req, res) => {
       },
     });
 
-    if (!downloadRes.ok || !downloadRes.body) {
+    if (!downloadRes.ok) {
       console.error("❌ [Media Proxy] Failed to download media from Meta");
       return res.status(500).json({ error: "Failed to download media" });
     }
 
-    // 3. Forward the headers (Content-Type, Content-Length)
+    // 3. Buffer and send the media binary with headers
     const contentType = downloadRes.headers.get("content-type");
-    const contentLength = downloadRes.headers.get("content-length");
-    
+    const arrayBuffer = await downloadRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
     if (contentType) res.setHeader("Content-Type", contentType);
-    if (contentLength) res.setHeader("Content-Length", contentLength);
-    
-    // Enable caching for a year since WhatsApp media IDs are immutable
+    res.setHeader("Content-Length", buffer.length);
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
 
-    // 4. Pipe the binary stream to the client
-    Readable.fromWeb(downloadRes.body).pipe(res);
+    return res.send(buffer);
   } catch (err) {
-    console.error("❌ [Media Proxy] Internal Error:", err);
+    console.error("❌ [Media Proxy] Internal Error:", err.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

@@ -38,9 +38,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2.5 select-none group">
-          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-shadow">
-            <Dumbbell className="h-5 w-5" />
-          </div>
+          <img src="/app-icon.png" alt="FitFlow Logo" className="h-10 w-10 rounded-2xl object-cover shadow-lg shadow-indigo-500/25 group-hover:shadow-indigo-500/40 transition-shadow" />
           <span className="text-xl font-extrabold tracking-tight text-slate-900">
             Fit<span className="text-indigo-600">Flow</span>
           </span>

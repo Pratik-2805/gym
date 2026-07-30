@@ -232,7 +232,7 @@ export default function DashboardPage() {
             <div>
               <h4 className="text-xs font-bold text-white">Secure Your Workspace Account</h4>
               <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5 leading-relaxed">
-                Enable 1-tap **Face ID, Touch ID, or Windows Hello** to log in securely next time without entering passwords.
+                Enable 1-tap <strong className="font-bold text-zinc-200">Face ID, Touch ID, or Windows Hello</strong> to log in securely next time without entering passwords.
               </p>
             </div>
           </div>

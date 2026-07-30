@@ -79,18 +79,18 @@ export default function DashboardShell({ children, gym, activeUser }: DashboardS
 
   const sidebarLinks = [
     { label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4 shrink-0" />, href: `/dashboard` },
-    { label: 'Members', icon: <Users className="h-4 w-4 shrink-0" />, href: `/dashboard/members` },
-    { label: 'Plans', icon: <CreditCard className="h-4 w-4 shrink-0" />, href: `/dashboard/plans` },
-    { label: 'Payments', icon: <CheckSquare className="h-4 w-4 shrink-0" />, href: `/dashboard/payments` },
-    { label: 'Chatbot', icon: <Bot className="h-4 w-4 shrink-0" />, href: `/dashboard/chatbot` },
-    { label: 'Inbox', icon: <MessageCircle className="h-4 w-4 shrink-0" />, href: `/dashboard/inbox` },
-    { label: 'Templates', icon: <FileText className="h-4 w-4 shrink-0" />, href: `/dashboard/templates` },
+    { label: 'Members', icon: <Users className="h-4 w-4 shrink-0" />, href: `/members` },
+    { label: 'Plans', icon: <CreditCard className="h-4 w-4 shrink-0" />, href: `/plans` },
+    { label: 'Payments', icon: <CheckSquare className="h-4 w-4 shrink-0" />, href: `/payments` },
+    { label: 'Chatbot', icon: <Bot className="h-4 w-4 shrink-0" />, href: `/chatbot` },
+    { label: 'Inbox', icon: <MessageCircle className="h-4 w-4 shrink-0" />, href: `/inbox` },
+    { label: 'Templates', icon: <FileText className="h-4 w-4 shrink-0" />, href: `/templates` },
     { 
       label: 'Settings', 
       icon: <Settings className="h-4 w-4 shrink-0" />, 
       subLinks: [
-        { label: 'General', href: `/dashboard/settings/general` },
-        { label: 'WhatsApp Setup', href: `/dashboard/settings/whatsapp` }
+        { label: 'General', href: `/settings/general` },
+        { label: 'WhatsApp Setup', href: `/settings/whatsapp` }
       ]
     },
   ];
@@ -112,7 +112,7 @@ export default function DashboardShell({ children, gym, activeUser }: DashboardS
           {!isCollapsed ? (
             <>
               <div className="flex items-center overflow-hidden">
-                <Dumbbell className="h-6 w-6 text-cyan-400 shrink-0" />
+                <img src="/app-icon.png" alt="FitFlow Logo" className="h-7 w-7 rounded-lg object-contain shrink-0" />
                 <span className={`text-lg font-black tracking-tight text-zinc-100 uppercase whitespace-nowrap overflow-hidden transition-all duration-300 ${isCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[120px] opacity-100 ml-2'}`}>
                   Fit<span className="text-cyan-400">Flow</span>
                 </span>
@@ -130,7 +130,7 @@ export default function DashboardShell({ children, gym, activeUser }: DashboardS
               className="group p-2 rounded-xl text-cyan-400 hover:bg-zinc-800 hover:text-zinc-300 transition-all flex items-center justify-center w-10 h-10"
               title="Expand Sidebar"
             >
-              <Dumbbell className="h-6 w-6 group-hover:hidden" />
+              <img src="/app-icon.png" alt="FitFlow Logo" className="h-7 w-7 rounded-lg object-contain group-hover:hidden" />
               <PanelLeftOpen className="h-5 w-5 hidden group-hover:block" />
             </button>
           )}

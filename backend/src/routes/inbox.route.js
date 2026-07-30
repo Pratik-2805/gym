@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const parseMessageText = (rawText) => {
-  if (rawText && rawText.startsWith("{")) {
+  if (rawText && typeof rawText === "string" && rawText.startsWith("{")) {
     try {
       const parsed = JSON.parse(rawText);
       if (parsed.mediaUrl) {
@@ -32,21 +32,29 @@ const parseMessageText = (rawText) => {
           content: parsed.caption || `[media]`,
           mediaUrl: parsed.mediaUrl,
           mimeType: parsed.mimeType,
-          caption: parsed.caption
+          caption: parsed.caption,
+          replyToMessageId: parsed.replyToMessageId || null
         };
       }
       if (parsed.isTemplate) {
         return {
-          content: parsed.content,
+          content: parsed.content || "",
           isTemplate: true,
-          template: parsed.template
+          template: parsed.template,
+          replyToMessageId: parsed.replyToMessageId || null
+        };
+      }
+      if (parsed.text !== undefined || parsed.content !== undefined || parsed.replyToMessageId) {
+        return {
+          content: parsed.text !== undefined ? parsed.text : (parsed.content || ""),
+          replyToMessageId: parsed.replyToMessageId || null
         };
       }
     } catch (e) {
-      // Not JSON or parse failed
+      // fallback
     }
   }
-  return { content: rawText };
+  return { content: rawText, replyToMessageId: null };
 };
 
 
@@ -238,12 +246,15 @@ router.get("/:memberId", async (req, res) => {
       }
     });
 
+    const cleanPhone = member.phone ? member.phone.replace(/[^\d]/g, '') : '';
+    const phoneVariants = Array.from(new Set([member.phone, cleanPhone, `+${cleanPhone}`].filter(Boolean)));
+
     const messages = await prisma.whatsAppMessage.findMany({
       where: {
         gymId: gym.id,
         OR: [
-          { senderPhone: member.phone },
-          { recipientPhone: member.phone }
+          { senderPhone: { in: phoneVariants } },
+          { recipientPhone: { in: phoneVariants } }
         ]
       },
       orderBy: { createdAt: "asc" }
@@ -259,6 +270,7 @@ router.get("/:memberId", async (req, res) => {
         mediaUrl: parsed.mediaUrl,
         mimeType: parsed.mimeType,
         caption: parsed.caption,
+        replyToMessageId: parsed.replyToMessageId || null,
         direction: m.direction.toLowerCase(),
         status: m.status.toLowerCase(),
         errorMessage: m.errorMessage || null,
@@ -272,7 +284,7 @@ router.get("/:memberId", async (req, res) => {
       where: {
         gymId: gym.id,
         direction: "INBOUND",
-        senderPhone: member.phone
+        senderPhone: { in: phoneVariants }
       },
       orderBy: { createdAt: "desc" }
     });
@@ -335,11 +347,14 @@ router.post("/:memberId/mark-read", async (req, res) => {
       return res.status(404).json({ error: "Member not found" });
     }
 
+    const cleanPhone = member.phone ? member.phone.replace(/[^\d]/g, '') : '';
+    const phoneVariants = Array.from(new Set([member.phone, cleanPhone, `+${cleanPhone}`].filter(Boolean)));
+
     // Update in DB
     await prisma.whatsAppMessage.updateMany({
       where: {
         gymId: gym.id,
-        senderPhone: member.phone,
+        senderPhone: { in: phoneVariants },
         direction: "INBOUND",
         status: { not: "READ" }
       },
@@ -352,7 +367,7 @@ router.post("/:memberId/mark-read", async (req, res) => {
     const lastInbound = await prisma.whatsAppMessage.findFirst({
       where: {
         gymId: gym.id,
-        senderPhone: member.phone,
+        senderPhone: { in: phoneVariants },
         direction: "INBOUND"
       },
       orderBy: { createdAt: "desc" }
@@ -414,7 +429,7 @@ router.post("/:memberId/mark-read", async (req, res) => {
 router.post("/:memberId/send", async (req, res) => {
   const gymSlug = req.gym.slug;
   const { memberId } = req.params;
-  const { text } = req.body;
+  const { text, replyToMessageId } = req.body;
 
   if (!text || !text.trim()) {
     return res.status(400).json({ error: "Message content is required" });
@@ -453,6 +468,21 @@ router.post("/:memberId/send", async (req, res) => {
       const GRAPH_BASE_URL = process.env.META_GRAPH_BASE_URL || "https://graph.facebook.com";
       const META_API_VERSION = process.env.META_API_VERSION || "v20.0";
 
+      const metaPayload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: member.phone,
+        type: "text",
+        text: {
+          preview_url: false,
+          body: text
+        }
+      };
+
+      if (replyToMessageId) {
+        metaPayload.context = { message_id: replyToMessageId };
+      }
+
       const response = await fetch(
         `${GRAPH_BASE_URL}/${META_API_VERSION}/${gym.whatsapp_phone_number_id}/messages`,
         {
@@ -461,16 +491,7 @@ router.post("/:memberId/send", async (req, res) => {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            recipient_type: "individual",
-            to: member.phone,
-            type: "text",
-            text: {
-              preview_url: false,
-              body: text
-            }
-          })
+          body: JSON.stringify(metaPayload)
         }
       );
 
@@ -487,6 +508,14 @@ router.post("/:memberId/send", async (req, res) => {
       return res.status(500).json({ error: err.message || "Failed to dispatch message to Meta" });
     }
 
+    let textPayload = text;
+    if (replyToMessageId) {
+      textPayload = JSON.stringify({
+        text,
+        replyToMessageId,
+      });
+    }
+
     // Save message to DB
     const savedMessage = await prisma.whatsAppMessage.create({
       data: {
@@ -494,7 +523,7 @@ router.post("/:memberId/send", async (req, res) => {
         messageId,
         senderPhone: gym.whatsappDisplayPhoneNumber || "system",
         recipientPhone: member.phone,
-        text,
+        text: textPayload,
         direction: "OUTBOUND",
         status
       }
@@ -503,7 +532,8 @@ router.post("/:memberId/send", async (req, res) => {
     const mappedMsg = {
       id: savedMessage.id,
       whatsappMessageId: savedMessage.messageId,
-      content: savedMessage.text,
+      content: text,
+      replyToMessageId: replyToMessageId || null,
       direction: "outbound",
       status: status.toLowerCase(),
       createdAt: savedMessage.createdAt

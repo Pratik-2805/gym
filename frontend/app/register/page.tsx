@@ -111,7 +111,7 @@ export default function RegisterPage() {
 
   const handleSkipOnboarding = () => {
     if (registeredGymSlug) {
-      router.push(`/dashboard/${registeredGymSlug}/dashboard`);
+      router.push(`/dashboard`);
     } else {
       router.push('/login');
     }
@@ -127,11 +127,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           {/* Header Logo */}
           <div className="mb-8 text-center flex flex-col items-center">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-violet-600 p-0.5 shadow-xl shadow-cyan-500/10">
-              <div className="flex h-full w-full items-center justify-center rounded-2xl bg-zinc-950">
-                <Dumbbell className="h-6 w-6 text-cyan-400" />
-              </div>
-            </div>
+            <img src="/app-icon.png" alt="FitFlow Logo" className="mb-3 h-14 w-14 rounded-2xl object-cover shadow-xl shadow-cyan-500/10" />
             <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
               FIT<span className="bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">FLOW</span>
             </h1>
@@ -149,7 +145,7 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <h2 className="text-xl font-bold text-white">Enable Biometric Login</h2>
               <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-                Secure your workspace with 1-click **Face ID, Touch ID, or Windows Hello**. You won't need to enter passwords in the future.
+                Secure your workspace with 1-click <strong className="font-bold text-zinc-200">Face ID, Touch ID, or Windows Hello</strong>. You won't need to enter passwords in the future.
               </p>
             </div>
 

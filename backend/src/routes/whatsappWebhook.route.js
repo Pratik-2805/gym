@@ -222,6 +222,7 @@ router.post("/", async (req, res) => {
         const messageId = msg.id;
         const senderPhone = msg.from;
         const recipientPhone = value.metadata.display_phone_number || "";
+        const replyToMessageId = msg.context?.id || null;
 
         // Extract message body text
         let text = "";
@@ -276,6 +277,7 @@ router.post("/", async (req, res) => {
                 mediaUrl,
                 mimeType,
                 caption,
+                replyToMessageId,
               });
 
               console.log(
@@ -285,6 +287,11 @@ router.post("/", async (req, res) => {
               // Update local display text for logs and console
               text = caption || `[${msg.type} message]`;
             }
+          } else if (replyToMessageId) {
+            textPayload = JSON.stringify({
+              text,
+              replyToMessageId,
+            });
           }
 
           // Extract WhatsApp profile name
@@ -388,6 +395,8 @@ router.post("/", async (req, res) => {
                     mediaUrl = parsed.mediaUrl;
                     mimeType = parsed.mimeType;
                     caption = parsed.caption;
+                  } else if (parsed.text !== undefined) {
+                    content = parsed.text;
                   }
                 } catch (e) { }
               }
@@ -400,6 +409,7 @@ router.post("/", async (req, res) => {
                 mediaUrl,
                 mimeType,
                 caption,
+                replyToMessageId: replyToMessageId || null,
                 direction: "inbound",
                 status: "received",
                 createdAt: incomingMessage.createdAt,
