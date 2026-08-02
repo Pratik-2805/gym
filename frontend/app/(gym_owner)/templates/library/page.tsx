@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { LayoutGrid, ChevronRight, Search, FileText, ArrowLeft } from 'lucide-react';
+import React, { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { LayoutGrid, ChevronRight, Search, FileText, ArrowLeft, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 const PREDEFINED_TEMPLATES = [
@@ -116,8 +116,10 @@ const PREDEFINED_TEMPLATES = [
   }
 ];
 
-export default function TemplateLibraryPage() {
+function TemplateLibraryContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const source = searchParams.get('source');
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredTemplates = PREDEFINED_TEMPLATES.filter(t => 
@@ -143,6 +145,21 @@ export default function TemplateLibraryPage() {
           </p>
         </div>
       </div>
+
+      {source === 'plan_edit' && (
+        <div className="rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-bold text-cyan-400">Can't find a template?</h3>
+            <p className="text-xs text-zinc-400 mt-1">Create a custom template for your plan updates if the predefined ones don't match your needs.</p>
+          </div>
+          <button
+            onClick={() => router.push('/templates?create=custom')}
+            className="flex items-center justify-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-xs font-bold text-white transition-all hover:bg-cyan-500 whitespace-nowrap"
+          >
+            <Plus className="h-4 w-4" /> Create Custom Template
+          </button>
+        </div>
+      )}
 
       <div className="relative z-20 rounded-2xl p-4 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs transition-all duration-300 bg-zinc-950/70 dark:bg-zinc-950/40">
         <div className="flex flex-1 flex-col sm:flex-row items-center justify-between gap-3 w-full">
@@ -224,5 +241,13 @@ export default function TemplateLibraryPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TemplateLibraryPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-zinc-500">Loading templates...</div>}>
+      <TemplateLibraryContent />
+    </Suspense>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -230,6 +231,7 @@ const PREDEFINED_TEMPLATES = [
 
 export default function MessageTemplatesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Connection & settings details
   const [isConnected, setIsConnected] = useState(false);
@@ -256,7 +258,19 @@ export default function MessageTemplatesPage() {
   const statusRef = useRef<HTMLDivElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
 
+  const [mounted, setMounted] = useState(false);
+
+  // Auto-open create modal when navigating from library with ?create=custom
   useEffect(() => {
+    if (searchParams.get('create') === 'custom') {
+      setIsCreateOpen(true);
+      // Clean the URL without reloading
+      router.replace('/templates', { scroll: false });
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    setMounted(true);
     function handleClickOutside(event: MouseEvent) {
       if (
         statusRef.current &&
@@ -1092,17 +1106,18 @@ export default function MessageTemplatesPage() {
       {/* ======================================================== */}
       {/* DRAWER 1: PREVIEW / DETAILS DRAWER                       */}
       {/* ======================================================== */}
-      <AnimatePresence>
-        {selectedTemplate && (
-          <>
-            {/* Backdrop overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedTemplate(null)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-            />
+      {mounted && createPortal(
+        <AnimatePresence>
+          {selectedTemplate && (
+            <>
+              {/* Backdrop overlay */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedTemplate(null)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+              />
 
             {/* Centered Modal Container */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
@@ -1497,12 +1512,15 @@ export default function MessageTemplatesPage() {
             </div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
 
       {/* ======================================================== */}
       {/* DRAWER 2: CREATE TEMPLATE DRAFT DRAWER                   */}
       {/* ======================================================== */}
-      <AnimatePresence>
+      {mounted && createPortal(
+        <AnimatePresence>
         {isCreateOpen && (
           <>
             {/* Backdrop overlay */}
@@ -1511,11 +1529,11 @@ export default function MessageTemplatesPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsCreateOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60]"
             />
 
             {/* Centered Modal Container */}
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -2115,12 +2133,15 @@ export default function MessageTemplatesPage() {
             </div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
 
       {/* ======================================================== */}
       {/* DELETE CONFIRMATION MODAL                                 */}
       {/* ======================================================== */}
-      <AnimatePresence>
+      {mounted && createPortal(
+        <AnimatePresence>
         {deleteConfirmId && (
           <>
             <motion.div
@@ -2194,7 +2215,9 @@ export default function MessageTemplatesPage() {
             </div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
     </div>
   );
 }

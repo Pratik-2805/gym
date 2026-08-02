@@ -267,14 +267,26 @@ export default function PlansPage() {
                       </div>
                     </div>
                     
-                    {/* Delete Plan */}
-                    <button
-                      onClick={(e) => handleDeletePlan(e, p.id)}
-                      className="rounded-lg p-1.5 text-zinc-600 hover:bg-rose-500/10 hover:text-rose-400 transition-all"
-                      title="Delete Plan"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPlan(p);
+                        }}
+                        className="rounded-lg p-1.5 text-zinc-600 hover:bg-cyan-500/10 hover:text-cyan-400 transition-all"
+                        title="Edit Plan"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeletePlan(e, p.id)}
+                        className="rounded-lg p-1.5 text-zinc-600 hover:bg-rose-500/10 hover:text-rose-400 transition-all"
+                        title="Delete Plan"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mb-4">
@@ -439,7 +451,7 @@ export default function PlansPage() {
                     <div className="flex items-center justify-between pt-2 border-t border-amber-500/20">
                       <span className="text-[11px] text-zinc-400">Need template?</span>
                       <Link
-                        href="/templates/library"
+                        href="/templates/library?source=plan_edit"
                         className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-500/30 transition-colors"
                       >
                         <BookOpen className="h-3.5 w-3.5" /> Template Library
@@ -478,7 +490,7 @@ export default function PlansPage() {
                     </button>
                   ) : (
                     <Link
-                      href="/templates/library"
+                      href="/templates/library?source=plan_edit"
                       className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-amber-600 py-3 font-bold text-white hover:bg-amber-500 transition-all text-center"
                     >
                       <BookOpen className="h-4 w-4" /> Create Template First
